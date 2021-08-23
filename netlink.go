@@ -8,7 +8,7 @@ import (
 const SOCK_DIAG_BY_FAMILY = 20
 
 type NetlinkMessage struct {
-	Header unix.NlMsghdr,
+	Header unix.NlMsghdr
 	Data []byte
 }
 

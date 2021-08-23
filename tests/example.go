@@ -1,7 +1,8 @@
 package main
 
-import "fmt"
-
+import (
+    "github.com/kckeiks/netlink"
+)
 func main() {
-    fmt.Println("Hello, World!")
+    netlink.SendQuery(netlink.NetlinkMessage{})
 }
