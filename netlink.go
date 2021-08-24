@@ -6,6 +6,7 @@ import (
 )
 
 var byteOrder = binary.LittleEndian
+var ipAddrByteOrder = binary.BigEndian
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr
