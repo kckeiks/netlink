@@ -43,19 +43,19 @@ type InetDiagMsg struct {
 }
 
 func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
-	buffer := make([]byte, 56)
-	buffer[0] = req.Family
-	buffer[1] = req.Protocol
-	buffer[2] = req.Ext
-	buffer[3] = req.Pad
-	byteOrder.PutUint32(buffer[4:8], req.States)
-	ipAddrByteOrder.PutUint16(buffer[8:10], req.ID.SPort)
-	ipAddrByteOrder.PutUint16(buffer[10:12], req.ID.DPort)
-	ipAddrByteOrder.PutUint32(buffer[12:28], req.ID.Src)
-	ipAddrByteOrder.PutUint32(buffer[28:44], req.ID.Dst)
-	byteOrder.PutUint32(buffer[44:48], req.ID.If)
-	byteOrder.PutUint32(buffer[48:56], req.ID.Cookie)
-	return buffer
+	b := make([]byte, 56)
+	b[0] = req.Family
+	b[1] = req.Protocol
+	b[2] = req.Ext
+	b[3] = req.Pad
+	byteOrder.PutUint32(b[4:8], req.States)
+	ipAddrByteOrder.PutUint16(b[8:10], req.ID.SPort)
+	ipAddrByteOrder.PutUint16(b[10:12], req.ID.DPort)
+	ipAddrByteOrder.PutUint32(b[12:28], req.ID.Src)
+	ipAddrByteOrder.PutUint32(b[28:44], req.ID.Dst)
+	byteOrder.PutUint32(b[44:48], req.ID.If)
+	byteOrder.PutUint32(b[48:56], req.ID.Cookie)
+	return b
 }
 
 func SendQuery(m NetlinkMessage) error {
