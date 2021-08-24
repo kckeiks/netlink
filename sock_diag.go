@@ -43,9 +43,9 @@ type InetDiagMsg struct {
 }
 
 
-func serializeInetDiagReqV2(m NetlinkMessage) ([]byte, error) {
+// func serializeInetDiagReqV2(m NetlinkMessage) ([]byte, error) {
 
-}
+// }
 
 func SendQuery(m NetlinkMessage) error {
 	// have:
