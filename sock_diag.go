@@ -63,6 +63,7 @@ func GetInetDiagMsg() error  {
 	// 	serialize data to be sent
 	//  use SendTo to send query
 	//  use Rcvdfrom to get response
+	
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
 		fmt.Println("Error creating socket.")
