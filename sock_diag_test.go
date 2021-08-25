@@ -34,11 +34,7 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	req := CreateTestInetDiagReqV2()
 	
 	// When: we serialize the header
-	serializedData, err := serializeInetDiagReqV2(req)
-
-	if err != nil {
-		t.Fatalf("Error when serializing.")
-	}
+	serializedData := serializeInetDiagReqV2(req)
 
 	// Then: it's serialized with the correct data
 	if req.Family != serializedData[0] {

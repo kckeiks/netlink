@@ -45,14 +45,14 @@ type InetDiagMsg struct {
 	Inode   uint32
 }
 
-func serializeInetDiagReqV2(req InetDiagReqV2) ([]byte, error) {
+func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	b := bytes.NewBuffer(make([]byte, sizeOfInetDiagReqV2))
 	b.Reset()
 	err := binary.Write(b, byteOrder, req)
 	if err != nil {
-		return nil, err
+		panic("Error: failed to serialize InetDiagReqV2.")
 	}
-	return b.Bytes(), nil
+	return b.Bytes()
 }
 
 func SendQuery(m NetlinkMessage) error {
