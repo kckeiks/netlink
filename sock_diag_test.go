@@ -12,15 +12,19 @@ func CreateTestInetDiagReqV2() InetDiagReqV2 {
 	req.Ext = 3
 	req.Pad = 4
 	req.States = 5
-
 	idsi := InetDiagSockID{}
-	idsi.SPort = [2]byte{}
-	idsi.DPort = [2]byte{}
-	idsi.Src = [16]byte{}
-	idsi.Dst = [16]byte{}
+	idsi.SPort = [2]byte{0x10, 0x20}
+	idsi.DPort = [2]byte{0x30, 0x40}
+	idsi.Src = [16]byte{
+		0x10, 0x20, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+		0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x90,
+	}
+	idsi.Dst = [16]byte{
+		0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
+		0x10, 0x20, 0x10, 0x10, 0x10, 0x10, 0x10, 0x70,
+	}
 	idsi.If = 6
-	idsi.Cookie = [2]uint32{7,8}
-
+	idsi.Cookie = [2]uint32{7, 8}
 	req.ID = idsi
 	return req
 }
@@ -30,7 +34,11 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	req := CreateTestInetDiagReqV2()
 	
 	// When: we serialize the header
-	serializedData := serializeInetDiagReqV2(req)
+	serializedData, err := serializeInetDiagReqV2(req)
+
+	if err != nil {
+		t.Fatalf("Error when serializing.")
+	}
 
 	// Then: it's serialized with the correct data
 	if req.Family != serializedData[0] {

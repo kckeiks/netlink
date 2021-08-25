@@ -1,6 +1,8 @@
 package netlink
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"golang.org/x/sys/unix"
 )
@@ -43,22 +45,14 @@ type InetDiagMsg struct {
 	Inode   uint32
 }
 
-func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
-	b := make([]byte, sizeOfInetDiagReqV2)
-	b[0] = req.Family
-	b[1] = req.Protocol
-	b[2] = req.Ext
-	b[3] = req.Pad
-	byteOrder.PutUint32(b[4:8], req.States)
-	copy(b[8:10], req.ID.SPort[:])
-	copy(b[10:12], req.ID.DPort[:])
-	copy(b[12:28], req.ID.Src[:])
-	copy(b[28:44], req.ID.Dst[:])
-	byteOrder.PutUint32(b[44:48], req.ID.If)
-	byteOrder.PutUint32(b[48:52], req.ID.Cookie[0])
-	byteOrder.PutUint32(b[52:56], req.ID.Cookie[1])
-
-	return b
+func serializeInetDiagReqV2(req InetDiagReqV2) ([]byte, error) {
+	b := bytes.NewBuffer(make([]byte, sizeOfInetDiagReqV2))
+	b.Reset()
+	err := binary.Write(b, byteOrder, req)
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
 func SendQuery(m NetlinkMessage) error {
