@@ -5,13 +5,14 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const sizeOfInetDiagReqV2 = 56
 const SOCK_DIAG_BY_FAMILY = 20
 
 type InetDiagSockID struct {
-	SPort  uint16   // source port          __be16  idiag_sport;
-	DPort  uint16   // destination port     __be16  idiag_dport;
-	Src    [4]uint32  // source address       __be32  idiag_src[4];
-	Dst    [4]uint32  // destination address  __be32  idiag_dst[4];
+	SPort  [2]byte   // source port          __be16  idiag_sport;
+	DPort  [2]byte    // destination port     __be16  idiag_dport;
+	Src    [16]byte  // source address       __be32  idiag_src[4];
+	Dst    [16]byte  // destination address  __be32  idiag_dst[4];
 	If     uint32
 	Cookie [2]uint32
 }
@@ -43,18 +44,20 @@ type InetDiagMsg struct {
 }
 
 func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
-	b := make([]byte, 56)
+	b := make([]byte, sizeOfInetDiagReqV2)
 	b[0] = req.Family
 	b[1] = req.Protocol
 	b[2] = req.Ext
 	b[3] = req.Pad
 	byteOrder.PutUint32(b[4:8], req.States)
-	ipAddrByteOrder.PutUint16(b[8:10], req.ID.SPort)
-	ipAddrByteOrder.PutUint16(b[10:12], req.ID.DPort)
-	ipAddrByteOrder.PutUint32(b[12:28], req.ID.Src)
-	ipAddrByteOrder.PutUint32(b[28:44], req.ID.Dst)
+	copy(b[8:10], req.ID.SPort[:])
+	copy(b[10:12], req.ID.DPort[:])
+	copy(b[12:28], req.ID.Src[:])
+	copy(b[28:44], req.ID.Dst[:])
 	byteOrder.PutUint32(b[44:48], req.ID.If)
-	byteOrder.PutUint32(b[48:56], req.ID.Cookie)
+	byteOrder.PutUint32(b[48:52], req.ID.Cookie[0])
+	byteOrder.PutUint32(b[52:56], req.ID.Cookie[1])
+
 	return b
 }
 
