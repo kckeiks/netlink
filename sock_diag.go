@@ -56,6 +56,16 @@ func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	return b.Bytes()
 }
 
+func deserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
+	b := bytes.NewBuffer(data)
+	req := InetDiagReqV2{}
+	err := binary.Read(b, byteOrder, &req)
+	if err != nil {
+		panic("Error: Could not deserialize InetDiagReqV2.")
+	}
+	return req
+}
+
 func GetInetDiagMsg() error  {
 	// Algorithm:
 	//  create socket
@@ -63,7 +73,7 @@ func GetInetDiagMsg() error  {
 	// 	serialize data to be sent
 	//  use SendTo to send query
 	//  use Rcvdfrom to get response
-	
+
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
 		fmt.Println("Error creating socket.")

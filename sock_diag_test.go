@@ -3,6 +3,7 @@ package netlink
 import (
 	"testing"
 	"bytes"
+	"reflect"
 )
 
 func CreateTestInetDiagReqV2() InetDiagReqV2 {
@@ -72,5 +73,20 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	}
 	if req.ID.Cookie[1] != testByteOrder.Uint32(serializedData[52:56]) {
 		t.Fatalf("InetDiagReqV2.ID.Cookie[1] = %d, expected %d", req.ID.Cookie[1], testByteOrder.Uint32(serializedData[52:56]))
+	}
+}
+
+
+func TestDeserializeInetDiagReqV2(t *testing.T) {
+	// Given: a inet_diag_req_v2 header
+	req := CreateTestInetDiagReqV2()
+	serializedData := serializeInetDiagReqV2(req)
+
+	// When: we deserialize
+	result := deserializeInetDiagReqV2(serializedData)
+
+	// Then: the struct that we get has the same values as the initial struct
+	if !reflect.DeepEqual(result, req) {
+		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", req, result)
 	}
 }
