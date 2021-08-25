@@ -5,8 +5,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-var testByteOrder = byteOrder
-
 func CreateTestNetlinkMessage() NetlinkMessage {
 	m := NetlinkMessage{}
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}

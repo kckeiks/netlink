@@ -1,12 +1,6 @@
 package netlink
 
-import (
-	"golang.org/x/sys/unix"
-	"encoding/binary"
-)
-
-var byteOrder = binary.LittleEndian
-var ipAddrByteOrder = binary.BigEndian
+import "golang.org/x/sys/unix"
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr
