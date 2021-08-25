@@ -57,13 +57,12 @@ func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
 }
 
 func GetInetDiagMsg() error  {
-	// have:
-	// m.Header
-	// m.Data
-	// algoright:
-	//  create socket conn (or FD??)
-	// serialize data to be sent
-	// using fd, use SendTo to send query (figure arguments)
+	// Algorithm:
+	//  create socket
+	//  init data
+	// 	serialize data to be sent
+	//  use SendTo to send query
+	//  use Rcvdfrom to get response
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
 		fmt.Println("Error creating socket.")
