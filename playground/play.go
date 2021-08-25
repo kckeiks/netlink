@@ -4,5 +4,5 @@ import (
     "github.com/kckeiks/netlink"
 )
 func main() {
-    netlink.SendQuery(netlink.NetlinkMessage{})
+    netlink.GetInetDiagMsg()
 }

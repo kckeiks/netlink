@@ -7,6 +7,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const sizeOfMessageWithInetDiagReqV2 = 72
 const sizeOfInetDiagReqV2 = 56
 const SOCK_DIAG_BY_FAMILY = 20
 
@@ -55,7 +56,7 @@ func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	return b.Bytes()
 }
 
-func SendQuery(m NetlinkMessage) error {
+func GetInetDiagMsg() error  {
 	// have:
 	// m.Header
 	// m.Data
@@ -63,11 +64,33 @@ func SendQuery(m NetlinkMessage) error {
 	//  create socket conn (or FD??)
 	// serialize data to be sent
 	// using fd, use SendTo to send query (figure arguments)
-	_, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
+	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
 		fmt.Println("Error creating socket.")
 		return err
 	}
-	fmt.Println("SUCCESS!")
+
+	inetReq := InetDiagReqV2{
+		Family: unix.AF_INET,
+		Protocol: unix.IPPROTO_TCP,
+		States: ^uint32(0),
+	}
+
+	header := unix.NlMsghdr{
+		Len: sizeOfMessageWithInetDiagReqV2,
+		Type: SOCK_DIAG_BY_FAMILY,
+		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
+		Pid: 0,
+	}
+
+	m := NetlinkMessage{
+		Header: header,
+		Data: serializeInetDiagReqV2(inetReq),
+	}
+
+	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
+	unix.Sendto(fd, SerializeNetlinkMessage(m), 0, addr)
+
+	fmt.Printf("%+v\n", m)
 	return nil
 }
