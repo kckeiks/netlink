@@ -76,11 +76,12 @@ func TestDeserializeNetlinkMessage(t *testing.T) {
 func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
 	// Given: a serialized netlink message without extra data
 	m := CreateTestNetlinkMessage()
-	m.Data := []byte{} 
+	m.Data = []byte{} 
+	m.Header.Len = uint32(unix.SizeofNlMsghdr)
 	serializedData := SerializeNetlinkMessage(m)
 	
 	// When: we deserialize the message
-	result, xdata := deserializeNetlinkMessage(serializedData)
+	_, xdata := deserializeNetlinkMessage(serializedData)
 
 	// Then: nil is returned for the extra data
 	if xdata != nil {
