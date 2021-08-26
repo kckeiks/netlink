@@ -22,7 +22,7 @@ func CreateTestNetlinkMessage() NetlinkMessage {
 	return m
 }
 
-func TestValuesWhenSerializeNetlinkMessage(t *testing.T) {
+func TestSerializeNetlinkMessage(t *testing.T) {
 	// Given: a netlink message with random values
 	m := CreateTestNetlinkMessage()
 	
@@ -69,6 +69,21 @@ func TestDeserializeNetlinkMessage(t *testing.T) {
 	}
 	// Then: the extra data was returned
 	if bytes.Compare(xdata, m.Data) != 0 {
+		t.Fatalf("Extra data=%d, expected %d", xdata, m.Data)
+	}
+}
+
+func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
+	// Given: a serialized netlink message without extra data
+	m := CreateTestNetlinkMessage()
+	m.Data := []byte{} 
+	serializedData := SerializeNetlinkMessage(m)
+	
+	// When: we deserialize the message
+	result, xdata := deserializeNetlinkMessage(serializedData)
+
+	// Then: nil is returned for the extra data
+	if xdata != nil {
 		t.Fatalf("Extra data=%d, expected %d", xdata, m.Data)
 	}
 }
