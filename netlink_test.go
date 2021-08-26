@@ -17,7 +17,7 @@ func CreateTestNlMsghdr() unix.NlMsghdr {
 	return h
 }
 
-func TestSerializeNetlinkMessage(t *testing.T) {
+func TestNewSerializedNetlinkMsg(t *testing.T) {
 	// Given: a NlMsghdr header and some data in bytes
 	h := CreateTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
@@ -74,16 +74,16 @@ func TestDeserializeNetlinkMessage(t *testing.T) {
 
 func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
 	// Given: a serialized netlink message without extra data
-	m := CreateTestNetlinkMessage()
-	m.Data = []byte{} 
-	m.Header.Len = uint32(unix.SizeofNlMsghdr)
-	serializedData := SerializeNetlinkMessage(m)
+	h := CreateTestNlMsghdr()
+	data := []byte{} 
+	h.Len = uint32(unix.SizeofNlMsghdr)
+	serializedData := NewSerializedNetlinkMsg(h, data)
 	
 	// When: we deserialize the message
 	_, xdata := deserializeNetlinkMessage(serializedData)
 
 	// Then: nil is returned for the extra data
 	if xdata != nil {
-		t.Fatalf("Extra data=%d, expected %d", xdata, m.Data)
+		t.Fatalf("Extra data=%d, expected nil.", xdata)
 	}
 }
