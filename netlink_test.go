@@ -1,6 +1,8 @@
 package netlink
 
 import (
+	"bytes"
+	"reflect"
 	"testing"
 	"golang.org/x/sys/unix"
 )
@@ -50,5 +52,23 @@ func TestValuesWhenSerializeNetlinkMessage(t *testing.T) {
 	// Then: the serialized data has the correct number of bytes
 	if uint32(len(serializedData)) != m.Header.Len {
 		t.Fatalf("Incorrect length len(serializedData)=%d, expected %d", len(serializedData), m.Header.Len)
+	}
+}
+
+func TestDeserializeNetlinkMessage(t *testing.T) {
+	// Given: a serialized netlink message
+	m := CreateTestNetlinkMessage()
+	serializedData := SerializeNetlinkMessage(m)
+	
+	// When: we deserialize the message
+	result, xdata := deserializeNetlinkMessage(serializedData)
+
+	// Then: the struct that we get has the same values as the initial struct
+	if !reflect.DeepEqual(result, m.Header) {
+		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", result, m.Header)
+	}
+	// Then: the extra data was returned
+	if bytes.Compare(xdata, m.Data) != 0 {
+		t.Fatalf("Extra data=%d, expected %d", xdata, m.Data)
 	}
 }
