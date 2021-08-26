@@ -20,7 +20,7 @@ func NewSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	return b
 }
 
-func NewDeserializeNetlinkMsg(data []byte) (unix.NlMsghdr, []byte) {
+func DeserializeNetlinkMsg(data []byte) (unix.NlMsghdr, []byte) {
 	if len(data) < unix.SizeofNlMsghdr {
 		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
 	}

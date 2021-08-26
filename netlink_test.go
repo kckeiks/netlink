@@ -60,7 +60,7 @@ func TestDeserializeNetlinkMessage(t *testing.T) {
 	serializedData := NewSerializedNetlinkMsg(h, data[:])
 	
 	// When: we deserialize the message
-	result, xdata := NewDeserializeNetlinkMsg(serializedData)
+	result, xdata := DeserializeNetlinkMsg(serializedData)
 
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, h) {
@@ -80,7 +80,7 @@ func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
 	serializedData := NewSerializedNetlinkMsg(h, data)
 	
 	// When: we deserialize the message
-	_, xdata := NewDeserializeNetlinkMsg(serializedData)
+	_, xdata := DeserializeNetlinkMsg(serializedData)
 
 	// Then: nil is returned for the extra data
 	if xdata != nil {
