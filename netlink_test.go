@@ -9,11 +9,11 @@ import (
 
 func CreateTestNlMsghdr() unix.NlMsghdr {
 	h := unix.NlMsghdr{}
-	h.Len = uint32(unix.SizeofNlMsghdr)
-	h.Type = uint16(2)
-	h.Flags = uint16(5)
-	h.Seq = uint32(6)
-	h.Pid = uint32(11)
+	h.Len = unix.SizeofNlMsghdr
+	h.Type = 2
+	h.Flags = 5
+	h.Seq = 6
+	h.Pid = 11
 	return h
 }
 
