@@ -7,69 +7,68 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func CreateTestNetlinkMessage() NetlinkMessage {
-	m := NetlinkMessage{}
-	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
-	m.Data = data[:]
-	
-	header := unix.NlMsghdr{}
-	header.Len = uint32(unix.SizeofNlMsghdr + len(data))
-	header.Type = uint16(2)
-	header.Flags = uint16(5)
-	header.Seq = uint32(6)
-	header.Pid = uint32(11)
-	m.Header = header
-	return m
+func CreateTestNlMsghdr() unix.NlMsghdr {
+	h := unix.NlMsghdr{}
+	h.Len = uint32(unix.SizeofNlMsghdr)
+	h.Type = uint16(2)
+	h.Flags = uint16(5)
+	h.Seq = uint32(6)
+	h.Pid = uint32(11)
+	return h
 }
 
 func TestSerializeNetlinkMessage(t *testing.T) {
-	// Given: a netlink message with random values
-	m := CreateTestNetlinkMessage()
-	
-	// When: we serialize the message
-	serializedData := SerializeNetlinkMessage(m)
+	// Given: a NlMsghdr header and some data in bytes
+	h := CreateTestNlMsghdr()
+	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
+	h.Len = h.Len + uint32(len(data))
+
+	// When: we serialize the header and the data
+	serializedData := NewSerializedNetlinkMsg(h, data[:])
 
 	// Then: the message was serialized with the correct data
-	if m.Header.Len != testByteOrder.Uint32(serializedData[:4]) {
-		t.Fatalf("NlMsghdr.Length = %d, expected %d", testByteOrder.Uint32(serializedData[:4]), m.Header.Len)
+	if h.Len != testByteOrder.Uint32(serializedData[:4]) {
+		t.Fatalf("NlMsghdr.Length = %d, expected %d", testByteOrder.Uint32(serializedData[:4]), h.Len)
 	}
-	if m.Header.Type != testByteOrder.Uint16(serializedData[4:6]) {
-		t.Fatalf("NlMsghdr.Type = %d, expected %d", testByteOrder.Uint16(serializedData[4:6]), m.Header.Type)
+	if h.Type != testByteOrder.Uint16(serializedData[4:6]) {
+		t.Fatalf("NlMsghdr.Type = %d, expected %d", testByteOrder.Uint16(serializedData[4:6]), h.Type)
 	}
-	if m.Header.Flags != testByteOrder.Uint16(serializedData[6:8]) {
-		t.Fatalf("NlMsghdr.Flags = %d, expected %d", testByteOrder.Uint16(serializedData[6:8]), m.Header.Flags)
+	if h.Flags != testByteOrder.Uint16(serializedData[6:8]) {
+		t.Fatalf("NlMsghdr.Flags = %d, expected %d", testByteOrder.Uint16(serializedData[6:8]), h.Flags)
 	}
-	if m.Header.Seq != testByteOrder.Uint32(serializedData[8:12]) {
-		t.Fatalf("NlMsghdr.Seq = %d, expected %d", testByteOrder.Uint32(serializedData[8:12]), m.Header.Seq)
+	if h.Seq != testByteOrder.Uint32(serializedData[8:12]) {
+		t.Fatalf("NlMsghdr.Seq = %d, expected %d", testByteOrder.Uint32(serializedData[8:12]), h.Seq)
 	}
-	if m.Header.Pid != testByteOrder.Uint32(serializedData[12:16]) {
-		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testByteOrder.Uint32(serializedData[12:16]), m.Header.Pid)
+	if h.Pid != testByteOrder.Uint32(serializedData[12:16]) {
+		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testByteOrder.Uint32(serializedData[12:16]), h.Pid)
 	}
-	if testByteOrder.Uint32(m.Data) != testByteOrder.Uint32(serializedData[16:]) {
-		t.Fatalf("NlMsghdr.Data = %d, expected %d", testByteOrder.Uint32(serializedData[16:]), m.Data)
+	if testByteOrder.Uint32(data[:]) != testByteOrder.Uint32(serializedData[16:]) {
+		t.Fatalf("NlMsghdr.Data = %d, expected %d", testByteOrder.Uint32(serializedData[16:]), data)
 	}
 	
 	// Then: the serialized data has the correct number of bytes
-	if uint32(len(serializedData)) != m.Header.Len {
-		t.Fatalf("Incorrect length len(serializedData)=%d, expected %d", len(serializedData), m.Header.Len)
+	if uint32(len(serializedData)) != h.Len {
+		t.Fatalf("Incorrect length len(serializedData)=%d, expected %d", len(serializedData), h.Len)
 	}
 }
 
 func TestDeserializeNetlinkMessage(t *testing.T) {
 	// Given: a serialized netlink message
-	m := CreateTestNetlinkMessage()
-	serializedData := SerializeNetlinkMessage(m)
+	h := CreateTestNlMsghdr()
+	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
+	h.Len = h.Len + uint32(len(data))
+	serializedData := NewSerializedNetlinkMsg(h, data[:])
 	
 	// When: we deserialize the message
 	result, xdata := deserializeNetlinkMessage(serializedData)
 
 	// Then: the struct that we get has the same values as the initial struct
-	if !reflect.DeepEqual(result, m.Header) {
-		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", result, m.Header)
+	if !reflect.DeepEqual(result, h) {
+		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", result, h)
 	}
 	// Then: the extra data was returned
-	if bytes.Compare(xdata, m.Data) != 0 {
-		t.Fatalf("Extra data=%d, expected %d", xdata, m.Data)
+	if bytes.Compare(xdata, data[:]) != 0 {
+		t.Fatalf("Extra data=%d, expected %d", xdata, data)
 	}
 }
 
