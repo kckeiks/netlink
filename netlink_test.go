@@ -87,3 +87,22 @@ func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
 		t.Fatalf("Extra data=%d, expected nil.", xdata)
 	}
 }
+
+func TestDeserializeNetlinkMessageBadLen(t *testing.T) {
+	defer func() {
+        if r := recover(); r == nil {
+            t.Errorf("Error: did not panic.")
+        }
+    }()
+	// Given: a serialized nl message with extra data but 
+	// we do not update length in header
+	h := CreateTestNlMsghdr()
+	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
+	serializedData := NewSerializedNetlinkMsg(h, data[:])
+	
+	// When: we deserialize the message
+	// Then: we panic
+	DeserializeNetlinkMsg(serializedData)
+
+		
+}
