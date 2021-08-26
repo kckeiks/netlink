@@ -86,21 +86,16 @@ func GetInetDiagMsg() error  {
 		States: ^uint32(0),
 	}
 
-	header := unix.NlMsghdr{
+	h := unix.NlMsghdr{
 		Len: sizeOfMessageWithInetDiagReqV2,
 		Type: SOCK_DIAG_BY_FAMILY,
 		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
 		Pid: 0,
 	}
 
-	m := NetlinkMessage{
-		Header: header,
-		Data: serializeInetDiagReqV2(inetReq),
-	}
-
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
-	unix.Sendto(fd, SerializeNetlinkMessage(m), 0, addr)
+	unix.Sendto(fd, NewSerializedNetlinkMsg(h, serializeInetDiagReqV2(inetReq)), 0, addr)
 
-	fmt.Printf("%+v\n", m)
+	fmt.Printf("%+v\n", h)
 	return nil
 }
