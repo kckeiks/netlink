@@ -46,7 +46,7 @@ type InetDiagMsg struct {
 	Inode   uint32
 }
 
-func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
+func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	b := bytes.NewBuffer(make([]byte, sizeOfInetDiagReqV2))
 	b.Reset()
 	err := binary.Write(b, byteOrder, req)
@@ -56,7 +56,7 @@ func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	return b.Bytes()
 }
 
-func deserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
+func DeserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
 	b := bytes.NewBuffer(data)
 	req := InetDiagReqV2{}
 	err := binary.Read(b, byteOrder, &req)
@@ -94,7 +94,7 @@ func GetInetDiagMsg() error  {
 	}
 
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
-	unix.Sendto(fd, NewSerializedNetlinkMsg(h, serializeInetDiagReqV2(inetReq)), 0, addr)
+	unix.Sendto(fd, NewSerializedNetlinkMsg(h, SerializeInetDiagReqV2(inetReq)), 0, addr)
 
 	fmt.Printf("%+v\n", h)
 	return nil

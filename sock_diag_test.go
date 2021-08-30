@@ -35,7 +35,7 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	req := CreateTestInetDiagReqV2()
 	
 	// When: we serialize the header
-	serializedData := serializeInetDiagReqV2(req)
+	serializedData := SerializeInetDiagReqV2(req)
 
 	// Then: it's serialized with the correct data
 	if req.Family != serializedData[0] {
@@ -80,10 +80,10 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 func TestDeserializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
 	req := CreateTestInetDiagReqV2()
-	serializedData := serializeInetDiagReqV2(req)
+	serializedData := SerializeInetDiagReqV2(req)
 
 	// When: we deserialize
-	result := deserializeInetDiagReqV2(serializedData)
+	result := DeserializeInetDiagReqV2(serializedData)
 
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, req) {
