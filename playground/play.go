@@ -5,6 +5,7 @@ import (
     "github.com/kckeiks/netlink"
     "golang.org/x/sys/unix"
 )
+
 func main() {
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {

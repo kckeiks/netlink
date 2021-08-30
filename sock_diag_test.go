@@ -97,7 +97,6 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	}
 }
 
-
 func TestDeserializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
 	req := CreateTestInetDiagReqV2()
