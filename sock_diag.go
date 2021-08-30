@@ -96,6 +96,14 @@ func GetInetDiagMsg() error  {
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
 	unix.Sendto(fd, NewSerializedNetlinkMsg(h, SerializeInetDiagReqV2(inetReq)), 0, addr)
 
-	fmt.Printf("%+v\n", h)
+	readBuffer := make([]byte, OSPageSize)
+	n, _, _ := unix.Recvfrom(fd, readBuffer, 0)
+
+	readBuffer = readBuffer[:n]
+	for _, msg := range ParseNetlinkMsgs(readBuffer) {
+		fmt.Printf("Header: %+v\n", msg.Header)
+		fmt.Printf("Value: %+v\n", msg.Data)
+		fmt.Println("-------")
+	}
 	return nil
 }

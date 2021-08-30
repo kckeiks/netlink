@@ -52,7 +52,7 @@ func TestNewSerializedNetlinkMsg(t *testing.T) {
 	}
 }
 
-func TestDeserializeNetlinkMessage(t *testing.T) {
+func TestParseNetlinkMsg(t *testing.T) {
 	// Given: a serialized netlink message
 	h := CreateTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
@@ -60,7 +60,7 @@ func TestDeserializeNetlinkMessage(t *testing.T) {
 	serializedData := NewSerializedNetlinkMsg(h, data[:])
 	
 	// When: we deserialize the message
-	result, xdata := DeserializeNetlinkMsg(serializedData)
+	result, xdata := ParseNetlinkMsg(serializedData)
 
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, h) {
@@ -80,7 +80,7 @@ func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
 	serializedData := NewSerializedNetlinkMsg(h, data)
 	
 	// When: we deserialize the message
-	_, xdata := DeserializeNetlinkMsg(serializedData)
+	_, xdata := ParseNetlinkMsg(serializedData)
 
 	// Then: nil is returned for the extra data
 	if xdata != nil {
@@ -88,7 +88,7 @@ func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
 	}
 }
 
-func TestDeserializeNetlinkMessageBadLen(t *testing.T) {
+func TestParseNetlinkMsgBadLen(t *testing.T) {
 	defer func() {
         if r := recover(); r == nil {
             t.Errorf("Error: did not panic.")
@@ -102,7 +102,7 @@ func TestDeserializeNetlinkMessageBadLen(t *testing.T) {
 	
 	// When: we deserialize the message
 	// Then: we panic
-	DeserializeNetlinkMsg(serializedData)
+	ParseNetlinkMsg(serializedData)
 
 		
 }
