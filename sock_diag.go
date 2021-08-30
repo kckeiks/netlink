@@ -3,11 +3,9 @@ package netlink
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
-	"golang.org/x/sys/unix"
 )
 
-const sizeOfMessageWithInetDiagReqV2 = 72
+const SizeOfMessageWithInetDiagReqV2 = 72
 const sizeOfInetDiagReqV2 = 56
 const sizeOfInetDiagMsg = 72
 const SOCK_DIAG_BY_FAMILY = 20
@@ -76,46 +74,3 @@ func ParseInetDiagMsg(data []byte) InetDiagMsg {
 	}
 	return msg 
 }
-
-func GetInetDiagMsg() error  {
-	// Algorithm:
-	//  create socket
-	//  init data
-	// 	serialize data to be sent
-	//  use SendTo to send query
-	//  use Rcvdfrom to get response
-
-	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
-	if err != nil {
-		fmt.Println("Error creating socket.")
-		return err
-	}
-
-	inetReq := InetDiagReqV2{
-		Family: unix.AF_INET,
-		Protocol: unix.IPPROTO_TCP,
-		States: ^uint32(0),
-	}
-
-	h := unix.NlMsghdr{
-		Len: sizeOfMessageWithInetDiagReqV2,
-		Type: SOCK_DIAG_BY_FAMILY,
-		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
-		Pid: 0,
-	}
-
-	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
-	unix.Sendto(fd, NewSerializedNetlinkMsg(h, SerializeInetDiagReqV2(inetReq)), 0, addr)
-
-	readBuffer := make([]byte, OSPageSize)
-	n, _, _ := unix.Recvfrom(fd, readBuffer, 0)
-
-	readBuffer = readBuffer[:n]
-	for _, msg := range ParseNetlinkMessages(readBuffer) {
-		fmt.Printf("Header: %+v\n", msg.Header)
-		fmt.Printf("Value: %+v\n", ParseInetDiagMsg(msg.Data))
-		fmt.Println("-------")
-	}
-	return nil
-}
-
