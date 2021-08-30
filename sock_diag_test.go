@@ -3,6 +3,8 @@ package netlink
 import (
 	"testing"
 	"bytes"
+	"reflect"
+	"encoding/binary"
 )
 
 func CreateTestInetDiagReqV2() InetDiagReqV2 {
@@ -12,6 +14,27 @@ func CreateTestInetDiagReqV2() InetDiagReqV2 {
 	req.Ext = 3
 	req.Pad = 4
 	req.States = 5
+	idsi := createTestInetDiagSockID()
+	req.ID = idsi
+	return req
+}
+
+func createTestInetDiagMsg() InetDiagMsg {
+	idm := InetDiagMsg{}
+	idm.Family = 1
+	idm.State = 2
+	idm.Timer = 3
+	idm.Retrans = 4
+	idm.ID = createTestInetDiagSockID()
+	idm.Expires = 5
+	idm.RQueue = 6
+	idm.WQueue = 7
+	idm.UID = 8
+	idm.Inode = 9
+	return idm
+}
+
+func createTestInetDiagSockID() InetDiagSockID {
 	idsi := InetDiagSockID{}
 	idsi.SPort = [2]byte{0x10, 0x20}
 	idsi.DPort = [2]byte{0x30, 0x40}
@@ -25,8 +48,7 @@ func CreateTestInetDiagReqV2() InetDiagReqV2 {
 	}
 	idsi.If = 6
 	idsi.Cookie = [2]uint32{7, 8}
-	req.ID = idsi
-	return req
+	return idsi
 }
 
 func TestSerializeInetDiagReqV2(t *testing.T) {
@@ -34,7 +56,7 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	req := CreateTestInetDiagReqV2()
 	
 	// When: we serialize the header
-	serializedData := serializeInetDiagReqV2(req)
+	serializedData := SerializeInetDiagReqV2(req)
 
 	// Then: it's serialized with the correct data
 	if req.Family != serializedData[0] {
@@ -72,5 +94,35 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	}
 	if req.ID.Cookie[1] != testByteOrder.Uint32(serializedData[52:56]) {
 		t.Fatalf("InetDiagReqV2.ID.Cookie[1] = %d, expected %d", req.ID.Cookie[1], testByteOrder.Uint32(serializedData[52:56]))
+	}
+}
+
+func TestDeserializeInetDiagReqV2(t *testing.T) {
+	// Given: a inet_diag_req_v2 header
+	req := CreateTestInetDiagReqV2()
+	serializedData := SerializeInetDiagReqV2(req)
+
+	// When: we deserialize
+	result := DeserializeInetDiagReqV2(serializedData)
+
+	// Then: the struct that we get has the same values as the initial struct
+	if !reflect.DeepEqual(result, req) {
+		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", req, result)
+	}
+}
+
+func TestParseInetDiagMsg(t *testing.T) {
+	// Given: a serialized InetDiagMsg
+	msg := createTestInetDiagMsg()
+	serializedData := bytes.NewBuffer(make([]byte, sizeOfInetDiagMsg))
+	serializedData.Reset()
+	binary.Write(serializedData, testByteOrder, &msg)
+
+	// When: we deserialize
+	result := ParseInetDiagMsg(serializedData.Bytes())
+
+	// Then: the struct that we get has the same values as the initial struct
+	if !reflect.DeepEqual(result, msg) {
+		t.Fatalf("Given InetDiagMsg %+v but expected %+v,", result, msg)
 	}
 }

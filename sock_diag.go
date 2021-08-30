@@ -3,12 +3,11 @@ package netlink
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
-	"golang.org/x/sys/unix"
 )
 
-const sizeOfMessageWithInetDiagReqV2 = 72
+const SizeOfMessageWithInetDiagReqV2 = 72
 const sizeOfInetDiagReqV2 = 56
+const sizeOfInetDiagMsg = 72
 const SOCK_DIAG_BY_FAMILY = 20
 
 type InetDiagSockID struct {
@@ -46,7 +45,7 @@ type InetDiagMsg struct {
 	Inode   uint32
 }
 
-func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
+func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	b := bytes.NewBuffer(make([]byte, sizeOfInetDiagReqV2))
 	b.Reset()
 	err := binary.Write(b, byteOrder, req)
@@ -56,41 +55,22 @@ func serializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	return b.Bytes()
 }
 
-func GetInetDiagMsg() error  {
-	// Algorithm:
-	//  create socket
-	//  init data
-	// 	serialize data to be sent
-	//  use SendTo to send query
-	//  use Rcvdfrom to get response
-	
-	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
+func DeserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
+	b := bytes.NewBuffer(data)
+	req := InetDiagReqV2{}
+	err := binary.Read(b, byteOrder, &req)
 	if err != nil {
-		fmt.Println("Error creating socket.")
-		return err
+		panic("Error: Could not deserialize InetDiagReqV2.")
 	}
+	return req
+}
 
-	inetReq := InetDiagReqV2{
-		Family: unix.AF_INET,
-		Protocol: unix.IPPROTO_TCP,
-		States: ^uint32(0),
+func ParseInetDiagMsg(data []byte) InetDiagMsg {
+	msg := InetDiagMsg{}
+	b := bytes.NewBuffer(data)
+	err := binary.Read(b, byteOrder, &msg)
+	if err != nil {
+		panic("Error: Could not parse InetDiagMsg.")
 	}
-
-	header := unix.NlMsghdr{
-		Len: sizeOfMessageWithInetDiagReqV2,
-		Type: SOCK_DIAG_BY_FAMILY,
-		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
-		Pid: 0,
-	}
-
-	m := NetlinkMessage{
-		Header: header,
-		Data: serializeInetDiagReqV2(inetReq),
-	}
-
-	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
-	unix.Sendto(fd, SerializeNetlinkMessage(m), 0, addr)
-
-	fmt.Printf("%+v\n", m)
-	return nil
+	return msg 
 }
