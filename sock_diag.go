@@ -9,6 +9,7 @@ import (
 
 const sizeOfMessageWithInetDiagReqV2 = 72
 const sizeOfInetDiagReqV2 = 56
+const sizeOfInetDiagMsg = 72
 const SOCK_DIAG_BY_FAMILY = 20
 
 type InetDiagSockID struct {
@@ -66,6 +67,16 @@ func DeserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
 	return req
 }
 
+func ParseInetDiagMsg(data []byte) InetDiagMsg {
+	msg := InetDiagMsg{}
+	b := bytes.NewBuffer(data)
+	err := binary.Read(b, byteOrder, &msg)
+	if err != nil {
+		panic("Error: Could not parse InetDiagMsg.")
+	}
+	return msg 
+}
+
 func GetInetDiagMsg() error  {
 	// Algorithm:
 	//  create socket
@@ -102,8 +113,9 @@ func GetInetDiagMsg() error  {
 	readBuffer = readBuffer[:n]
 	for _, msg := range ParseNetlinkMessages(readBuffer) {
 		fmt.Printf("Header: %+v\n", msg.Header)
-		fmt.Printf("Value: %+v\n", msg.Data)
+		fmt.Printf("Value: %+v\n", ParseInetDiagMsg(msg.Data))
 		fmt.Println("-------")
 	}
 	return nil
 }
+
