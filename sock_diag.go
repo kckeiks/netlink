@@ -100,7 +100,7 @@ func GetInetDiagMsg() error  {
 	n, _, _ := unix.Recvfrom(fd, readBuffer, 0)
 
 	readBuffer = readBuffer[:n]
-	for _, msg := range ParseNetlinkMsgs(readBuffer) {
+	for _, msg := range ParseNetlinkMessages(readBuffer) {
 		fmt.Printf("Header: %+v\n", msg.Header)
 		fmt.Printf("Value: %+v\n", msg.Data)
 		fmt.Println("-------")
