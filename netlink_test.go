@@ -64,7 +64,7 @@ func TestParseNetlinkMsg(t *testing.T) {
 
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, h) {
-		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", result, h)
+		t.Fatalf("Given NlMsghdr %+v and deserialized is %+v,", result, h)
 	}
 	// Then: the extra data was returned
 	if bytes.Compare(xdata, data[:]) != 0 {
@@ -102,4 +102,32 @@ func TestParseNetlinkMsgBadLen(t *testing.T) {
 	// When: we deserialize the message
 	// Then: we panic
 	ParseNetlinkMessage(serializedData)
+}
+
+func TestParseNetlinkMessages(t *testing.T) {
+	// Given: a list of serialized netlink messages
+	h1 := CreateTestNlMsghdr()
+	data1 := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
+	h1.Len = h1.Len + uint32(len(data1))
+	h2 := CreateTestNlMsghdr()
+	data2 := [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x01}
+	h2.Len = h2.Len + uint32(len(data2))
+
+	var nlmsgs []byte
+	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h1, data1[:])...)
+	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h2, data2[:])...)
+
+	// When: parse these serialized data
+	result := ParseNetlinkMessages(nlmsgs)
+
+	// Then: We get the messages as expected
+	expectedNlMsg1 := NetlinkMessage{Header: h1, Data: data1[:]}
+	expectedNlMsg2 := NetlinkMessage{Header: h2, Data: data2[:]}
+
+	if !reflect.DeepEqual(result[0], expectedNlMsg1) {
+		t.Fatalf("Given first Netlink Msg %+v but received %+v,", result[0], expectedNlMsg1)
+	}
+	if !reflect.DeepEqual(result[1], expectedNlMsg2) {
+		t.Fatalf("Given second Netlink Msg %+v but received %+v,", result[1], expectedNlMsg2)
+	}
 }
