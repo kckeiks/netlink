@@ -111,7 +111,7 @@ func TestDeserializeInetDiagReqV2(t *testing.T) {
 	}
 }
 
-func TestParseInetDiagMsg(t *testing.T) {
+func TestDeserializeInetDiagMsg(t *testing.T) {
 	// Given: a serialized InetDiagMsg
 	msg := createTestInetDiagMsg()
 	serializedData := bytes.NewBuffer(make([]byte, sizeOfInetDiagMsg))
@@ -119,7 +119,7 @@ func TestParseInetDiagMsg(t *testing.T) {
 	binary.Write(serializedData, testByteOrder, &msg)
 
 	// When: we deserialize
-	result := ParseInetDiagMsg(serializedData.Bytes())
+	result := DeserializeInetDiagMsg(serializedData.Bytes())
 
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, msg) {

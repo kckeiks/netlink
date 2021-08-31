@@ -14,7 +14,7 @@ type NetlinkMessage struct {
 	Data []byte
 }
 
-func NewSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
+func NewEncodedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	if h.Len != (uint32(len(data)) + unix.SizeofNlMsghdr) {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
@@ -28,7 +28,7 @@ func NewSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	return b
 }
 
-func ParseNetlinkMessage(data []byte) (unix.NlMsghdr, []byte) {
+func ParseNetlinkMsg(data []byte) (unix.NlMsghdr, []byte) {
 	if len(data) < unix.SizeofNlMsghdr {
 		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
 	}
@@ -48,11 +48,11 @@ func ParseNetlinkMessage(data []byte) (unix.NlMsghdr, []byte) {
 	return header, data[unix.SizeofNlMsghdr:]
 }
 
-func ParseNetlinkMessages(data []byte) []NetlinkMessage {
+func ParseNetlinkMsgs(data []byte) []NetlinkMessage {
 	var msgs []NetlinkMessage
 	for len(data) > unix.NLMSG_HDRLEN {
 		l := byteOrder.Uint32(data[:4])
-		h, d := ParseNetlinkMessage(data[:l])
+		h, d := ParseNetlinkMsg(data[:l])
 		msgs = append(msgs, NetlinkMessage{Header: h, Data: d})
 		data = data[l:]
 	}

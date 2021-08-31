@@ -17,14 +17,14 @@ func CreateTestNlMsghdr() unix.NlMsghdr {
 	return h
 }
 
-func TestNewSerializedNetlinkMsg(t *testing.T) {
+func TestNewEncodedNetlinkMsg(t *testing.T) {
 	// Given: a NlMsghdr header and some data in bytes
 	h := CreateTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	h.Len = h.Len + uint32(len(data))
 
 	// When: we serialize the header and the data
-	serializedData := NewSerializedNetlinkMsg(h, data[:])
+	serializedData := NewEncodedNetlinkMsg(h, data[:])
 
 	// Then: the message was serialized with the correct data
 	if h.Len != testByteOrder.Uint32(serializedData[:4]) {
@@ -57,10 +57,10 @@ func TestParseNetlinkMsg(t *testing.T) {
 	h := CreateTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	h.Len = h.Len + uint32(len(data))
-	serializedData := NewSerializedNetlinkMsg(h, data[:])
+	serializedData := NewEncodedNetlinkMsg(h, data[:])
 	
 	// When: we deserialize the message
-	result, xdata := ParseNetlinkMessage(serializedData)
+	result, xdata := ParseNetlinkMsg(serializedData)
 
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, h) {
@@ -77,10 +77,10 @@ func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
 	h := CreateTestNlMsghdr()
 	data := []byte{} 
 	h.Len = uint32(unix.SizeofNlMsghdr)
-	serializedData := NewSerializedNetlinkMsg(h, data)
+	serializedData := NewEncodedNetlinkMsg(h, data)
 	
 	// When: we deserialize the message
-	_, xdata := ParseNetlinkMessage(serializedData)
+	_, xdata := ParseNetlinkMsg(serializedData)
 
 	// Then: nil is returned for the extra data
 	if xdata != nil {
@@ -98,10 +98,10 @@ func TestParseNetlinkMsgBadLen(t *testing.T) {
 	// we do not update length in header
 	h := CreateTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
-	serializedData := NewSerializedNetlinkMsg(h, data[:])
+	serializedData := NewEncodedNetlinkMsg(h, data[:])
 	// When: we deserialize the message
 	// Then: we panic
-	ParseNetlinkMessage(serializedData)
+	ParseNetlinkMsg(serializedData)
 }
 
 func TestParseNetlinkMessages(t *testing.T) {
@@ -114,11 +114,11 @@ func TestParseNetlinkMessages(t *testing.T) {
 	h2.Len = h2.Len + uint32(len(data2))
 
 	var nlmsgs []byte
-	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h1, data1[:])...)
-	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h2, data2[:])...)
+	nlmsgs = append(nlmsgs, NewEncodedNetlinkMsg(h1, data1[:])...)
+	nlmsgs = append(nlmsgs, NewEncodedNetlinkMsg(h2, data2[:])...)
 
 	// When: parse these serialized data
-	result := ParseNetlinkMessages(nlmsgs)
+	result := ParseNetlinkMsgs(nlmsgs)
 
 	// Then: We get the messages as expected
 	expectedNlMsg1 := NetlinkMessage{Header: h1, Data: data1[:]}
