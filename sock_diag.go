@@ -65,7 +65,7 @@ func DeserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
 	return req
 }
 
-func ParseInetDiagMsg(data []byte) InetDiagMsg {
+func DeserializeInetDiagMsg(data []byte) InetDiagMsg {
 	msg := InetDiagMsg{}
 	b := bytes.NewBuffer(data)
 	err := binary.Read(b, byteOrder, &msg)

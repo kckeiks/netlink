@@ -26,15 +26,15 @@ func main() {
 	}
 
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
-	unix.Sendto(fd, netlink.NewSerializedNetlinkMsg(h, netlink.SerializeInetDiagReqV2(inetReq)), 0, addr)
+	unix.Sendto(fd, netlink.NewEncodedNetlinkMsg(h, netlink.SerializeInetDiagReqV2(inetReq)), 0, addr)
 
 	readBuffer := make([]byte, netlink.OSPageSize)
 	n, _, _ := unix.Recvfrom(fd, readBuffer, 0)
 
 	readBuffer = readBuffer[:n]
-	for _, msg := range netlink.ParseNetlinkMessages(readBuffer) {
+	for _, msg := range netlink.ParseNetlinkMsgs(readBuffer) {
 		fmt.Printf("Header: %+v\n", msg.Header)
-		fmt.Printf("Value: %+v\n", netlink.ParseInetDiagMsg(msg.Data))
+		fmt.Printf("Value: %+v\n", netlink.DeserializeInetDiagMsg(msg.Data))
 		fmt.Println("-------")
 	}
 }
