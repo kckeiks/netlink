@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"golang.org/x/sys/unix"
 	"os"
+	// "fmt"
 )
 
 var OSPageSize = os.Getpagesize()
@@ -48,4 +49,27 @@ func ParseNetlinkMessage(data []byte) []NetlinkMessage {
 		data = data[l:]
 	}
 	return msgs
+}
+
+func ReceiveMessage(fd int) NetlinkMessage {
+	b := make([]byte, OSPageSize)
+	n, _, _ := unix.Recvfrom(fd, b, 0)
+	return DeserializeNetlinkMsg(b[:n]) 
+}
+
+func ReceiveMultipartMessage(fd int) []NetlinkMessage{
+	var msgs []NetlinkMessage
+	for done := false; !done; {
+		b := make([]byte, OSPageSize)
+		n, _, _ := unix.Recvfrom(fd, b, 0)
+		for _, msg := range ParseNetlinkMessage(b[:n]) {
+			if msg.Header.Type == unix.NLMSG_DONE {
+				done = true
+				break
+			}
+			msgs = append(msgs, msg) 
+		}
+		
+	}
+	return msgs 
 }

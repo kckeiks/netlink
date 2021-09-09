@@ -1,6 +1,7 @@
 package sockdiag
 
 import (
+	// "fmt"
 	"bytes"
 	"encoding/binary"
 	"golang.org/x/sys/unix"
@@ -75,4 +76,25 @@ func DeserializeInetDiagMsg(data []byte) InetDiagMsg {
 		panic("Error: Could not parse InetDiagMsg.")
 	}
 	return msg 
+}
+
+
+func SendInetQuery(nlmsg []byte) []InetDiagMsg {
+	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
+	if err != nil {
+		panic("Error creating socket.")
+	}
+
+	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
+	unix.Sendto(fd, nlmsg, 0, addr)
+
+	nlmsgs := netlink.ReceiveMultipartMessage(fd)
+
+	idmsgs := make([]InetDiagMsg, len(nlmsgs))
+
+	for _, msg := range nlmsgs {
+		idmsgs = append(idmsgs, DeserializeInetDiagMsg(msg.Data))
+	}
+
+	return idmsgs
 }
