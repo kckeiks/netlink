@@ -36,7 +36,7 @@ func main() {
 	n, _, _ := unix.Recvfrom(fd, readBuffer, 0)
 
 	readBuffer = readBuffer[:n]
-	for _, msg := range netlink.ParseNetlinkMessages(readBuffer) {
+	for _, msg := range netlink.ParseNetlinkMessage(readBuffer) {
 		fmt.Printf("Header: %+v\n", msg.Header)
 		fmt.Printf("Value: %+v\n", sockdiag.DeserializeInetDiagMsg(msg.Data))
 		fmt.Println("-------")
