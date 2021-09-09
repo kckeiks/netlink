@@ -50,7 +50,7 @@ func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
 	if nlh.Len != SizeOfMessageWithInetDiagReqV2 {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
-	msg := NewNetlinkMessage(nlh)
+	msg := NewSerializedNetlinkMessage(nlh)
 	ih := SerializeInetDiagReqV2(inetHeader)
 	copy(msg[unix.SizeofNlMsghdr:], ih)
 	return msg
