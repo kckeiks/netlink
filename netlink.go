@@ -16,11 +16,11 @@ type NetlinkMessage struct {
 
 func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 	b := make([]byte, h.Len)
-	byteOrder.PutUint32(b[:4], h.Len)
-	byteOrder.PutUint16(b[4:6], h.Type)
-	byteOrder.PutUint16(b[6:8], h.Flags)
-	byteOrder.PutUint32(b[8:12], h.Seq)
-	byteOrder.PutUint32(b[12:16], h.Pid)
+	ByteOrder.PutUint32(b[:4], h.Len)
+	ByteOrder.PutUint16(b[4:6], h.Type)
+	ByteOrder.PutUint16(b[6:8], h.Flags)
+	ByteOrder.PutUint32(b[8:12], h.Seq)
+	ByteOrder.PutUint32(b[12:16], h.Pid)
 	return b
 }
 
@@ -31,7 +31,7 @@ func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 	serializedData := bytes.NewBuffer(data[:unix.SizeofNlMsghdr])
 	h := unix.NlMsghdr{}
 
-	err := binary.Read(serializedData, byteOrder, &h)
+	err := binary.Read(serializedData, ByteOrder, &h)
 	if err != nil {
 		panic("Error: Could not deserialize NlMsghdr.")
 	}
@@ -42,7 +42,7 @@ func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 func ParseNetlinkMessages(data []byte) []NetlinkMessage {
 	var msgs []NetlinkMessage
 	for len(data) > unix.NLMSG_HDRLEN {
-		l := byteOrder.Uint32(data[:4])
+		l := ByteOrder.Uint32(data[:4])
 		nlmsg := DeserializeNetlinkMsg(data[:l])
 		msgs = append(msgs, nlmsg)
 		data = data[l:]

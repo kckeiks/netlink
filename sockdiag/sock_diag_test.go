@@ -1,31 +1,32 @@
-package netlink
+package sockdiag
 
 import (
 	"testing"
 	"bytes"
 	"reflect"
 	"encoding/binary"
+	"github.com/kckeiks/netlink/internal/testutils"
 )
 
-func CreateTestInetDiagReqV2() InetDiagReqV2 {
+func newTestInetDiagReqV2() InetDiagReqV2 {
 	req := InetDiagReqV2{}
 	req.Family = 1
 	req.Protocol = 2
 	req.Ext = 3
 	req.Pad = 4
 	req.States = 5
-	idsi := createTestInetDiagSockID()
+	idsi := newTestInetDiagSockID()
 	req.ID = idsi
 	return req
 }
 
-func createTestInetDiagMsg() InetDiagMsg {
+func newTestInetDiagMsg() InetDiagMsg {
 	idm := InetDiagMsg{}
 	idm.Family = 1
 	idm.State = 2
 	idm.Timer = 3
 	idm.Retrans = 4
-	idm.ID = createTestInetDiagSockID()
+	idm.ID = newTestInetDiagSockID()
 	idm.Expires = 5
 	idm.RQueue = 6
 	idm.WQueue = 7
@@ -34,7 +35,7 @@ func createTestInetDiagMsg() InetDiagMsg {
 	return idm
 }
 
-func createTestInetDiagSockID() InetDiagSockID {
+func newTestInetDiagSockID() InetDiagSockID {
 	idsi := InetDiagSockID{}
 	idsi.SPort = [2]byte{0x10, 0x20}
 	idsi.DPort = [2]byte{0x30, 0x40}
@@ -54,7 +55,7 @@ func createTestInetDiagSockID() InetDiagSockID {
 func deserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
 	b := bytes.NewBuffer(data)
 	req := InetDiagReqV2{}
-	err := binary.Read(b, byteOrder, &req)
+	err := binary.Read(b, testutils.TestByteOrder, &req)
 	if err != nil {
 		panic("Error: Could not deserialize InetDiagReqV2.")
 	}
@@ -63,7 +64,7 @@ func deserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
 
 func TestSerializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
-	req := CreateTestInetDiagReqV2()
+	req := newTestInetDiagReqV2()
 	
 	// When: we serialize the header
 	serializedData := SerializeInetDiagReqV2(req)
@@ -81,8 +82,8 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	if req.Pad != serializedData[3] {
 		t.Fatalf("InetDiagReqV2.Pad = %d, expected %d", serializedData[3], req.Pad)
 	}
-	if req.States != testByteOrder.Uint32(serializedData[4:8]) {
-		t.Fatalf("InetDiagReqV2.States = %d, expected %d", testByteOrder.Uint32(serializedData[4:8]), req.States)
+	if req.States != testutils.TestByteOrder.Uint32(serializedData[4:8]) {
+		t.Fatalf("InetDiagReqV2.States = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[4:8]), req.States)
 	}
 	if bytes.Compare(req.ID.SPort[:], serializedData[8:10]) != 0 {
 		t.Fatalf("InetDiagReqV2.ID.SPort = %d, expected %d", req.ID.SPort, serializedData[8:10])
@@ -96,23 +97,23 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	if bytes.Compare(req.ID.Dst[:], serializedData[28:44]) != 0 {
 		t.Fatalf("InetDiagReqV2.ID.Dst = %d, expected %d", req.ID.Dst, serializedData[28:44])
 	}
-	if req.ID.If != testByteOrder.Uint32(serializedData[44:48]) {
+	if req.ID.If != testutils.TestByteOrder.Uint32(serializedData[44:48]) {
 		t.Fatalf("InetDiagReqV2.ID.If = %d, expected %d", req.ID.If, serializedData[44:48])
 	}
-	if req.ID.Cookie[0] != testByteOrder.Uint32(serializedData[48:52]) {
-		t.Fatalf("InetDiagReqV2.ID.Cookie[0] = %d, expected %d", req.ID.Cookie[0], testByteOrder.Uint32(serializedData[48:52]))
+	if req.ID.Cookie[0] != testutils.TestByteOrder.Uint32(serializedData[48:52]) {
+		t.Fatalf("InetDiagReqV2.ID.Cookie[0] = %d, expected %d", req.ID.Cookie[0], testutils.TestByteOrder.Uint32(serializedData[48:52]))
 	}
-	if req.ID.Cookie[1] != testByteOrder.Uint32(serializedData[52:56]) {
-		t.Fatalf("InetDiagReqV2.ID.Cookie[1] = %d, expected %d", req.ID.Cookie[1], testByteOrder.Uint32(serializedData[52:56]))
+	if req.ID.Cookie[1] != testutils.TestByteOrder.Uint32(serializedData[52:56]) {
+		t.Fatalf("InetDiagReqV2.ID.Cookie[1] = %d, expected %d", req.ID.Cookie[1], testutils.TestByteOrder.Uint32(serializedData[52:56]))
 	}
 }
 
 func TestDeserializeInetDiagMsg(t *testing.T) {
 	// Given: a serialized InetDiagMsg
-	msg := createTestInetDiagMsg()
+	msg := newTestInetDiagMsg()
 	serializedData := bytes.NewBuffer(make([]byte, sizeOfInetDiagMsg))
 	serializedData.Reset()
-	binary.Write(serializedData, testByteOrder, &msg)
+	binary.Write(serializedData, testutils.TestByteOrder, &msg)
 
 	// When: we deserialize
 	result := DeserializeInetDiagMsg(serializedData.Bytes())
@@ -125,7 +126,7 @@ func TestDeserializeInetDiagMsg(t *testing.T) {
 
 func TestDeserializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
-	req := CreateTestInetDiagReqV2()
+	req := newTestInetDiagReqV2()
 	serializedData := SerializeInetDiagReqV2(req)
 
 	// When: we deserialize
@@ -139,28 +140,28 @@ func TestDeserializeInetDiagReqV2(t *testing.T) {
 
 func TestNewInetNetlinkMsg(t *testing.T) {
 	// Given: a NlMsghdr header and some data in bytes
-	h := NewTestNlMsghdr()
-	inetHeader := CreateTestInetDiagReqV2()
+	h := testutils.NewTestNlMsghdr()
+	inetHeader := newTestInetDiagReqV2()
 	h.Len = SizeOfMessageWithInetDiagReqV2
 
 	// When: we serialize the header and the data
 	serializedData := NewInetNetlinkMsg(h, inetHeader)
 
 	// Then: the message was serialized with the correct data
-	if h.Len != testByteOrder.Uint32(serializedData[:4]) {
-		t.Fatalf("NlMsghdr.Length = %d, expected %d", testByteOrder.Uint32(serializedData[:4]), h.Len)
+	if h.Len != testutils.TestByteOrder.Uint32(serializedData[:4]) {
+		t.Fatalf("NlMsghdr.Length = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[:4]), h.Len)
 	}
-	if h.Type != testByteOrder.Uint16(serializedData[4:6]) {
-		t.Fatalf("NlMsghdr.Type = %d, expected %d", testByteOrder.Uint16(serializedData[4:6]), h.Type)
+	if h.Type != testutils.TestByteOrder.Uint16(serializedData[4:6]) {
+		t.Fatalf("NlMsghdr.Type = %d, expected %d", testutils.TestByteOrder.Uint16(serializedData[4:6]), h.Type)
 	}
-	if h.Flags != testByteOrder.Uint16(serializedData[6:8]) {
-		t.Fatalf("NlMsghdr.Flags = %d, expected %d", testByteOrder.Uint16(serializedData[6:8]), h.Flags)
+	if h.Flags != testutils.TestByteOrder.Uint16(serializedData[6:8]) {
+		t.Fatalf("NlMsghdr.Flags = %d, expected %d", testutils.TestByteOrder.Uint16(serializedData[6:8]), h.Flags)
 	}
-	if h.Seq != testByteOrder.Uint32(serializedData[8:12]) {
-		t.Fatalf("NlMsghdr.Seq = %d, expected %d", testByteOrder.Uint32(serializedData[8:12]), h.Seq)
+	if h.Seq != testutils.TestByteOrder.Uint32(serializedData[8:12]) {
+		t.Fatalf("NlMsghdr.Seq = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[8:12]), h.Seq)
 	}
-	if h.Pid != testByteOrder.Uint32(serializedData[12:16]) {
-		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testByteOrder.Uint32(serializedData[12:16]), h.Pid)
+	if h.Pid != testutils.TestByteOrder.Uint32(serializedData[12:16]) {
+		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[12:16]), h.Pid)
 	}
 
 	deserializedInetHeader := deserializeInetDiagReqV2(serializedData[16:])

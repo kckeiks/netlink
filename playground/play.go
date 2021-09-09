@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "github.com/kckeiks/netlink"
+	"github.com/kckeiks/netlink/sockdiag"
     "golang.org/x/sys/unix"
 )
 
@@ -12,21 +13,21 @@ func main() {
 		panic("Error creating socket.")
 	}
 
-	inetReq := netlink.InetDiagReqV2{
+	inetReq := sockdiag.InetDiagReqV2{
 		Family: unix.AF_INET,
 		Protocol: unix.IPPROTO_TCP,
 		States: ^uint32(0),
 	}
 
 	h := unix.NlMsghdr{
-		Len: netlink.SizeOfMessageWithInetDiagReqV2,
-		Type: netlink.SOCK_DIAG_BY_FAMILY,
+		Len: sockdiag.SizeOfMessageWithInetDiagReqV2,
+		Type: sockdiag.SOCK_DIAG_BY_FAMILY,
 		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
 		Pid: 0,
 	}
 
 
-	msg := netlink.NewInetNetlinkMsg(h, inetReq)
+	msg := sockdiag.NewInetNetlinkMsg(h, inetReq)
 
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
 	unix.Sendto(fd, msg, 0, addr)
@@ -37,7 +38,7 @@ func main() {
 	readBuffer = readBuffer[:n]
 	for _, msg := range netlink.ParseNetlinkMessages(readBuffer) {
 		fmt.Printf("Header: %+v\n", msg.Header)
-		fmt.Printf("Value: %+v\n", netlink.DeserializeInetDiagMsg(msg.Data))
+		fmt.Printf("Value: %+v\n", sockdiag.DeserializeInetDiagMsg(msg.Data))
 		fmt.Println("-------")
 	}
 }
