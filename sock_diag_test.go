@@ -139,7 +139,7 @@ func TestDeserializeInetDiagReqV2(t *testing.T) {
 
 func TestNewInetNetlinkMsg(t *testing.T) {
 	// Given: a NlMsghdr header and some data in bytes
-	h := CreateTestNlMsghdr()
+	h := NewTestNlMsghdr()
 	inetHeader := CreateTestInetDiagReqV2()
 	h.Len = SizeOfMessageWithInetDiagReqV2
 

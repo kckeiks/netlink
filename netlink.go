@@ -14,6 +14,16 @@ type NetlinkMessage struct {
 	Data []byte
 }
 
+func NewNetlinkMessage(h unix.NlMsghdr) []byte {
+	b := make([]byte, h.Len)
+	byteOrder.PutUint32(b[:4], h.Len)
+	byteOrder.PutUint16(b[4:6], h.Type)
+	byteOrder.PutUint16(b[6:8], h.Flags)
+	byteOrder.PutUint32(b[8:12], h.Seq)
+	byteOrder.PutUint32(b[12:16], h.Pid)
+	return b
+}
+
 func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 	if len(data) < unix.SizeofNlMsghdr {
 		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")

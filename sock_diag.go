@@ -50,16 +50,10 @@ func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
 	if nlh.Len != SizeOfMessageWithInetDiagReqV2 {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
-	b := make([]byte, nlh.Len)
-	byteOrder.PutUint32(b[:4], nlh.Len)
-	byteOrder.PutUint16(b[4:6], nlh.Type)
-	byteOrder.PutUint16(b[6:8], nlh.Flags)
-	byteOrder.PutUint32(b[8:12], nlh.Seq)
-	byteOrder.PutUint32(b[12:16], nlh.Pid)
-
+	msg := NewNetlinkMessage(nlh)
 	ih := SerializeInetDiagReqV2(inetHeader)
-	copy(b[16:], ih)
-	return b
+	copy(msg[unix.SizeofNlMsghdr:], ih)
+	return msg
 }
 
 func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {

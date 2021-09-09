@@ -7,7 +7,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func CreateTestNlMsghdr() unix.NlMsghdr {
+func NewTestNlMsghdr() unix.NlMsghdr {
 	h := unix.NlMsghdr{}
 	h.Len = unix.SizeofNlMsghdr
 	h.Type = 2
@@ -17,7 +17,7 @@ func CreateTestNlMsghdr() unix.NlMsghdr {
 	return h
 }
 
-func NewSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
+func newTestSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	if h.Len != (uint32(len(data)) + unix.SizeofNlMsghdr) {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
@@ -31,12 +31,42 @@ func NewSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	return b
 }
 
-func TestParseNetlinkMessage(t *testing.T) {
+func TestNewNetlinkMessage(t *testing.T) {
+	// Given: a NlMsghdr header
+	h := NewTestNlMsghdr()
+	// Given: length of nl msg with 4 more bytes of space 
+	h.Len = 16 + 4
+
+	// When: we serialize the header and the data
+	serializedData := NewNetlinkMessage(h)
+
+	// Then: the message was serialized with the correct data
+	if h.Len != testByteOrder.Uint32(serializedData[:4]) {
+		t.Fatalf("NlMsghdr.Length = %d, expected %d", testByteOrder.Uint32(serializedData[:4]), h.Len)
+	}
+	if h.Type != testByteOrder.Uint16(serializedData[4:6]) {
+		t.Fatalf("NlMsghdr.Type = %d, expected %d", testByteOrder.Uint16(serializedData[4:6]), h.Type)
+	}
+	if h.Flags != testByteOrder.Uint16(serializedData[6:8]) {
+		t.Fatalf("NlMsghdr.Flags = %d, expected %d", testByteOrder.Uint16(serializedData[6:8]), h.Flags)
+	}
+	if h.Seq != testByteOrder.Uint32(serializedData[8:12]) {
+		t.Fatalf("NlMsghdr.Seq = %d, expected %d", testByteOrder.Uint32(serializedData[8:12]), h.Seq)
+	}
+	if h.Pid != testByteOrder.Uint32(serializedData[12:16]) {
+		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testByteOrder.Uint32(serializedData[12:16]), h.Pid)
+	}
+	if len(serializedData[16:]) != 4 {
+		t.Fatalf("Len(serializedData) = %d, expected %d", len(serializedData[16:]), 4)
+	}
+}
+
+func TestDeserializeNetlinkMsg(t *testing.T) {
 	// Given: a serialized netlink message
-	h := CreateTestNlMsghdr()
+	h := NewTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	h.Len = h.Len + uint32(len(data))
-	serializedData := NewSerializedNetlinkMsg(h, data[:])
+	serializedData := newTestSerializedNetlinkMsg(h, data[:])
 	
 	// When: we deserialize the message
 	nlmsg := DeserializeNetlinkMsg(serializedData)
@@ -51,12 +81,12 @@ func TestParseNetlinkMessage(t *testing.T) {
 	}
 }
 
-func TestParseNetlinkMessageWithOutData(t *testing.T) {
+func TestDeserializeNetlinkMsgWithOutData(t *testing.T) {
 	// Given: a serialized netlink message without extra data
-	h := CreateTestNlMsghdr()
+	h := NewTestNlMsghdr()
 	data := []byte{} 
 	h.Len = uint32(unix.SizeofNlMsghdr)
-	serializedData := NewSerializedNetlinkMsg(h, data)
+	serializedData := newTestSerializedNetlinkMsg(h, data)
 	
 	// When: we deserialize the message
 	nlmsg := DeserializeNetlinkMsg(serializedData)
@@ -67,7 +97,7 @@ func TestParseNetlinkMessageWithOutData(t *testing.T) {
 	}
 }
 
-func TestParseNetlinkMessageBadLen(t *testing.T) {
+func TestDeserializeNetlinkMsgBadLen(t *testing.T) {
 	defer func() {
         if r := recover(); r == nil {
             t.Errorf("Error: did not panic.")
@@ -75,9 +105,9 @@ func TestParseNetlinkMessageBadLen(t *testing.T) {
     }()
 	// Given: a serialized nl message with extra data but 
 	// we do not update length in header
-	h := CreateTestNlMsghdr()
+	h := NewTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
-	serializedData := NewSerializedNetlinkMsg(h, data[:])
+	serializedData := newTestSerializedNetlinkMsg(h, data[:])
 	// When: we deserialize the message
 	// Then: we panic
 	DeserializeNetlinkMsg(serializedData)
@@ -85,16 +115,16 @@ func TestParseNetlinkMessageBadLen(t *testing.T) {
 
 func TestParseNetlinkMessages(t *testing.T) {
 	// Given: a list of serialized netlink messages
-	h1 := CreateTestNlMsghdr()
+	h1 := NewTestNlMsghdr()
 	data1 := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	h1.Len = h1.Len + uint32(len(data1))
-	h2 := CreateTestNlMsghdr()
+	h2 := NewTestNlMsghdr()
 	data2 := [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x01}
 	h2.Len = h2.Len + uint32(len(data2))
 
 	var nlmsgs []byte
-	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h1, data1[:])...)
-	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h2, data2[:])...)
+	nlmsgs = append(nlmsgs, newTestSerializedNetlinkMsg(h1, data1[:])...)
+	nlmsgs = append(nlmsgs, newTestSerializedNetlinkMsg(h2, data2[:])...)
 
 	// When: parse these serialized data
 	result := ParseNetlinkMessages(nlmsgs)
