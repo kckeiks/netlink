@@ -90,7 +90,7 @@ func TestDeserializeNetlinkMsgBadLen(t *testing.T) {
 	DeserializeNetlinkMsg(serializedData)
 }
 
-func TestParseNetlinkMessages(t *testing.T) {
+func TestParseNetlinkMessage(t *testing.T) {
 	// Given: a list of serialized netlink messages
 	h1 := testutils.NewTestNlMsghdr()
 	data1 := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
@@ -104,7 +104,7 @@ func TestParseNetlinkMessages(t *testing.T) {
 	nlmsgs = append(nlmsgs, testutils.NewTestSerializedNetlinkMsg(h2, data2[:])...)
 
 	// When: parse these serialized data
-	result := ParseNetlinkMessages(nlmsgs)
+	result := ParseNetlinkMessage(nlmsgs)
 
 	// Then: We get the messages as expected
 	expectedNlMsg1 := NetlinkMessage{Header: h1, Data: data1[:]}

@@ -39,7 +39,7 @@ func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 	return NetlinkMessage{Header: h, Data: data[unix.SizeofNlMsghdr:]}
 }
 
-func ParseNetlinkMessages(data []byte) []NetlinkMessage {
+func ParseNetlinkMessage(data []byte) []NetlinkMessage {
 	var msgs []NetlinkMessage
 	for len(data) > unix.NLMSG_HDRLEN {
 		l := ByteOrder.Uint32(data[:4])
