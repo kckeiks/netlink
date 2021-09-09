@@ -51,6 +51,16 @@ func createTestInetDiagSockID() InetDiagSockID {
 	return idsi
 }
 
+func deserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
+	b := bytes.NewBuffer(data)
+	req := InetDiagReqV2{}
+	err := binary.Read(b, byteOrder, &req)
+	if err != nil {
+		panic("Error: Could not deserialize InetDiagReqV2.")
+	}
+	return req
+}
+
 func TestSerializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
 	req := CreateTestInetDiagReqV2()
@@ -97,20 +107,6 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	}
 }
 
-func TestDeserializeInetDiagReqV2(t *testing.T) {
-	// Given: a inet_diag_req_v2 header
-	req := CreateTestInetDiagReqV2()
-	serializedData := SerializeInetDiagReqV2(req)
-
-	// When: we deserialize
-	result := DeserializeInetDiagReqV2(serializedData)
-
-	// Then: the struct that we get has the same values as the initial struct
-	if !reflect.DeepEqual(result, req) {
-		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", req, result)
-	}
-}
-
 func TestDeserializeInetDiagMsg(t *testing.T) {
 	// Given: a serialized InetDiagMsg
 	msg := createTestInetDiagMsg()
@@ -127,7 +123,21 @@ func TestDeserializeInetDiagMsg(t *testing.T) {
 	}
 }
 
-func TestNewEncodedNetlinkMsg(t *testing.T) {
+func TestDeserializeInetDiagReqV2(t *testing.T) {
+	// Given: a inet_diag_req_v2 header
+	req := CreateTestInetDiagReqV2()
+	serializedData := SerializeInetDiagReqV2(req)
+
+	// When: we deserialize
+	result := deserializeInetDiagReqV2(serializedData)
+
+	// Then: the struct that we get has the same values as the initial struct
+	if !reflect.DeepEqual(result, req) {
+		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", req, result)
+	}
+}
+
+func TestNewInetNetlinkMsg(t *testing.T) {
 	// Given: a NlMsghdr header and some data in bytes
 	h := CreateTestNlMsghdr()
 	inetHeader := CreateTestInetDiagReqV2()
@@ -153,7 +163,7 @@ func TestNewEncodedNetlinkMsg(t *testing.T) {
 		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testByteOrder.Uint32(serializedData[12:16]), h.Pid)
 	}
 
-	deserializedInetHeader := DeserializeInetDiagReqV2(serializedData[16:])
+	deserializedInetHeader := deserializeInetDiagReqV2(serializedData[16:])
 	// Then: the deserialized inetHeader that we get has the same values as the initial inetHeader
 	if !reflect.DeepEqual(deserializedInetHeader, inetHeader) {
 		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", inetHeader, deserializedInetHeader)

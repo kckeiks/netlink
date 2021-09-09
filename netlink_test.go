@@ -17,7 +17,7 @@ func CreateTestNlMsghdr() unix.NlMsghdr {
 	return h
 }
 
-func NewEncodedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
+func NewSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	if h.Len != (uint32(len(data)) + unix.SizeofNlMsghdr) {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
@@ -31,43 +31,43 @@ func NewEncodedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	return b
 }
 
-func TestParseNetlinkMsg(t *testing.T) {
+func TestParseNetlinkMessage(t *testing.T) {
 	// Given: a serialized netlink message
 	h := CreateTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	h.Len = h.Len + uint32(len(data))
-	serializedData := NewEncodedNetlinkMsg(h, data[:])
+	serializedData := NewSerializedNetlinkMsg(h, data[:])
 	
 	// When: we deserialize the message
-	result, xdata := ParseNetlinkMsg(serializedData)
+	nlmsg := DeserializeNetlinkMsg(serializedData)
 
 	// Then: the struct that we get has the same values as the initial struct
-	if !reflect.DeepEqual(result, h) {
-		t.Fatalf("Given NlMsghdr %+v and deserialized is %+v,", result, h)
+	if !reflect.DeepEqual(nlmsg.Header, h) {
+		t.Fatalf("Given NlMsghdr %+v and deserialized is %+v,", nlmsg.Header, h)
 	}
 	// Then: the extra data was returned
-	if bytes.Compare(xdata, data[:]) != 0 {
-		t.Fatalf("Extra data=%d, expected %d", xdata, data)
+	if bytes.Compare(nlmsg.Data, data[:]) != 0 {
+		t.Fatalf("Extra data=%d, expected %d", nlmsg.Data, data)
 	}
 }
 
-func TestDeserializeNetlinkMessageWithOutData(t *testing.T) {
+func TestParseNetlinkMessageWithOutData(t *testing.T) {
 	// Given: a serialized netlink message without extra data
 	h := CreateTestNlMsghdr()
 	data := []byte{} 
 	h.Len = uint32(unix.SizeofNlMsghdr)
-	serializedData := NewEncodedNetlinkMsg(h, data)
+	serializedData := NewSerializedNetlinkMsg(h, data)
 	
 	// When: we deserialize the message
-	_, xdata := ParseNetlinkMsg(serializedData)
+	nlmsg := DeserializeNetlinkMsg(serializedData)
 
-	// Then: nil is returned for the extra data
-	if xdata != nil {
-		t.Fatalf("Extra data=%d, expected nil.", xdata)
+	// Then: empty slice is returned for payload
+	if len(nlmsg.Data) != 0 {
+		t.Fatalf("Extra data=%d, expected [].", nlmsg.Data)
 	}
 }
 
-func TestParseNetlinkMsgBadLen(t *testing.T) {
+func TestParseNetlinkMessageBadLen(t *testing.T) {
 	defer func() {
         if r := recover(); r == nil {
             t.Errorf("Error: did not panic.")
@@ -77,10 +77,10 @@ func TestParseNetlinkMsgBadLen(t *testing.T) {
 	// we do not update length in header
 	h := CreateTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
-	serializedData := NewEncodedNetlinkMsg(h, data[:])
+	serializedData := NewSerializedNetlinkMsg(h, data[:])
 	// When: we deserialize the message
 	// Then: we panic
-	ParseNetlinkMsg(serializedData)
+	DeserializeNetlinkMsg(serializedData)
 }
 
 func TestParseNetlinkMessages(t *testing.T) {
@@ -93,11 +93,11 @@ func TestParseNetlinkMessages(t *testing.T) {
 	h2.Len = h2.Len + uint32(len(data2))
 
 	var nlmsgs []byte
-	nlmsgs = append(nlmsgs, NewEncodedNetlinkMsg(h1, data1[:])...)
-	nlmsgs = append(nlmsgs, NewEncodedNetlinkMsg(h2, data2[:])...)
+	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h1, data1[:])...)
+	nlmsgs = append(nlmsgs, NewSerializedNetlinkMsg(h2, data2[:])...)
 
 	// When: parse these serialized data
-	result := ParseNetlinkMsgs(nlmsgs)
+	result := ParseNetlinkMessages(nlmsgs)
 
 	// Then: We get the messages as expected
 	expectedNlMsg1 := NetlinkMessage{Header: h1, Data: data1[:]}

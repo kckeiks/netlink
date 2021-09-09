@@ -72,16 +72,6 @@ func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {
 	return b.Bytes()
 }
 
-func DeserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
-	b := bytes.NewBuffer(data)
-	req := InetDiagReqV2{}
-	err := binary.Read(b, byteOrder, &req)
-	if err != nil {
-		panic("Error: Could not deserialize InetDiagReqV2.")
-	}
-	return req
-}
-
 func DeserializeInetDiagMsg(data []byte) InetDiagMsg {
 	msg := InetDiagMsg{}
 	b := bytes.NewBuffer(data)
