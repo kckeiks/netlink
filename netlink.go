@@ -14,7 +14,7 @@ type NetlinkMessage struct {
 	Data []byte
 }
 
-func NewNetlinkMessage(h unix.NlMsghdr) []byte {
+func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 	b := make([]byte, h.Len)
 	byteOrder.PutUint32(b[:4], h.Len)
 	byteOrder.PutUint16(b[4:6], h.Type)

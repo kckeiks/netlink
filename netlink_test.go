@@ -31,14 +31,14 @@ func newTestSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
 	return b
 }
 
-func TestNewNetlinkMessage(t *testing.T) {
+func TestNewSerializedNetlinkMessage(t *testing.T) {
 	// Given: a NlMsghdr header
 	h := NewTestNlMsghdr()
 	// Given: length of nl msg with 4 more bytes of space 
 	h.Len = 16 + 4
 
 	// When: we serialize the header and the data
-	serializedData := NewNetlinkMessage(h)
+	serializedData := NewSerializedNetlinkMessage(h)
 
 	// Then: the message was serialized with the correct data
 	if h.Len != testByteOrder.Uint32(serializedData[:4]) {
