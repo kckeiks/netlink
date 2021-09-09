@@ -25,22 +25,17 @@ func main() {
 		Pid: 0,
 	}
 
-	inetReq.CreateInetNetlinkMsg(h)
 
-
-	msg := NewDecodedInetNetlinkMsg(h, inetheader)
-	msg := NewDecodedLinuxNetlinkMsg(h, inetheader)
-
-	response := SendNetlinkMessage(msg)
+	msg := netlink.NewInetNetlinkMsg(h, inetReq)
 
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
-	unix.Sendto(fd, netlink.NewEncodedNetlinkMsg(h, netlink.SerializeInetDiagReqV2(inetReq)), 0, addr)
+	unix.Sendto(fd, msg, 0, addr)
 
 	readBuffer := make([]byte, netlink.OSPageSize)
 	n, _, _ := unix.Recvfrom(fd, readBuffer, 0)
 
 	readBuffer = readBuffer[:n]
-	for _, msg := range netlink.ParseNetlinkMsgs(readBuffer) {
+	for _, msg := range netlink.ParseNetlinkMessages(readBuffer) {
 		fmt.Printf("Header: %+v\n", msg.Header)
 		fmt.Printf("Value: %+v\n", netlink.DeserializeInetDiagMsg(msg.Data))
 		fmt.Println("-------")
