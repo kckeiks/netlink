@@ -25,6 +25,14 @@ func main() {
 		Pid: 0,
 	}
 
+	inetReq.CreateInetNetlinkMsg(h)
+
+
+	msg := NewDecodedInetNetlinkMsg(h, inetheader)
+	msg := NewDecodedLinuxNetlinkMsg(h, inetheader)
+
+	response := SendNetlinkMessage(msg)
+
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
 	unix.Sendto(fd, netlink.NewEncodedNetlinkMsg(h, netlink.SerializeInetDiagReqV2(inetReq)), 0, addr)
 

@@ -14,19 +14,6 @@ type NetlinkMessage struct {
 	Data []byte
 }
 
-func NewEncodedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
-	if h.Len != (uint32(len(data)) + unix.SizeofNlMsghdr) {
-		panic("Error: Invalid NlMsghdr.Len.")
-	}
-	b := make([]byte, h.Len)
-	byteOrder.PutUint32(b[:4], h.Len)
-	byteOrder.PutUint16(b[4:6], h.Type)
-	byteOrder.PutUint16(b[6:8], h.Flags)
-	byteOrder.PutUint32(b[8:12], h.Seq)
-	byteOrder.PutUint32(b[12:16], h.Pid)
-	copy(b[16:], data)
-	return b
-}
 
 func ParseNetlinkMsg(data []byte) (unix.NlMsghdr, []byte) {
 	if len(data) < unix.SizeofNlMsghdr {

@@ -17,39 +17,18 @@ func CreateTestNlMsghdr() unix.NlMsghdr {
 	return h
 }
 
-func TestNewEncodedNetlinkMsg(t *testing.T) {
-	// Given: a NlMsghdr header and some data in bytes
-	h := CreateTestNlMsghdr()
-	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
-	h.Len = h.Len + uint32(len(data))
-
-	// When: we serialize the header and the data
-	serializedData := NewEncodedNetlinkMsg(h, data[:])
-
-	// Then: the message was serialized with the correct data
-	if h.Len != testByteOrder.Uint32(serializedData[:4]) {
-		t.Fatalf("NlMsghdr.Length = %d, expected %d", testByteOrder.Uint32(serializedData[:4]), h.Len)
+func NewEncodedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
+	if h.Len != (uint32(len(data)) + unix.SizeofNlMsghdr) {
+		panic("Error: Invalid NlMsghdr.Len.")
 	}
-	if h.Type != testByteOrder.Uint16(serializedData[4:6]) {
-		t.Fatalf("NlMsghdr.Type = %d, expected %d", testByteOrder.Uint16(serializedData[4:6]), h.Type)
-	}
-	if h.Flags != testByteOrder.Uint16(serializedData[6:8]) {
-		t.Fatalf("NlMsghdr.Flags = %d, expected %d", testByteOrder.Uint16(serializedData[6:8]), h.Flags)
-	}
-	if h.Seq != testByteOrder.Uint32(serializedData[8:12]) {
-		t.Fatalf("NlMsghdr.Seq = %d, expected %d", testByteOrder.Uint32(serializedData[8:12]), h.Seq)
-	}
-	if h.Pid != testByteOrder.Uint32(serializedData[12:16]) {
-		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testByteOrder.Uint32(serializedData[12:16]), h.Pid)
-	}
-	if testByteOrder.Uint32(data[:]) != testByteOrder.Uint32(serializedData[16:]) {
-		t.Fatalf("NlMsghdr.Data = %d, expected %d", testByteOrder.Uint32(serializedData[16:]), data)
-	}
-	
-	// Then: the serialized data has the correct number of bytes
-	if uint32(len(serializedData)) != h.Len {
-		t.Fatalf("Incorrect length len(serializedData)=%d, expected %d", len(serializedData), h.Len)
-	}
+	b := make([]byte, h.Len)
+	byteOrder.PutUint32(b[:4], h.Len)
+	byteOrder.PutUint16(b[4:6], h.Type)
+	byteOrder.PutUint16(b[6:8], h.Flags)
+	byteOrder.PutUint32(b[8:12], h.Seq)
+	byteOrder.PutUint32(b[12:16], h.Pid)
+	copy(b[16:], data)
+	return b
 }
 
 func TestParseNetlinkMsg(t *testing.T) {

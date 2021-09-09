@@ -126,3 +126,41 @@ func TestDeserializeInetDiagMsg(t *testing.T) {
 		t.Fatalf("Given InetDiagMsg %+v but expected %+v,", result, msg)
 	}
 }
+
+func TestNewEncodedNetlinkMsg(t *testing.T) {
+	// Given: a NlMsghdr header and some data in bytes
+	h := CreateTestNlMsghdr()
+	inetHeader := CreateTestInetDiagReqV2()
+	h.Len = SizeOfMessageWithInetDiagReqV2
+
+	// When: we serialize the header and the data
+	serializedData := NewInetNetlinkMsg(h, inetHeader)
+
+	// Then: the message was serialized with the correct data
+	if h.Len != testByteOrder.Uint32(serializedData[:4]) {
+		t.Fatalf("NlMsghdr.Length = %d, expected %d", testByteOrder.Uint32(serializedData[:4]), h.Len)
+	}
+	if h.Type != testByteOrder.Uint16(serializedData[4:6]) {
+		t.Fatalf("NlMsghdr.Type = %d, expected %d", testByteOrder.Uint16(serializedData[4:6]), h.Type)
+	}
+	if h.Flags != testByteOrder.Uint16(serializedData[6:8]) {
+		t.Fatalf("NlMsghdr.Flags = %d, expected %d", testByteOrder.Uint16(serializedData[6:8]), h.Flags)
+	}
+	if h.Seq != testByteOrder.Uint32(serializedData[8:12]) {
+		t.Fatalf("NlMsghdr.Seq = %d, expected %d", testByteOrder.Uint32(serializedData[8:12]), h.Seq)
+	}
+	if h.Pid != testByteOrder.Uint32(serializedData[12:16]) {
+		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testByteOrder.Uint32(serializedData[12:16]), h.Pid)
+	}
+
+	deserializedInetHeader := DeserializeInetDiagReqV2(serializedData[16:])
+	// Then: the deserialized inetHeader that we get has the same values as the initial inetHeader
+	if !reflect.DeepEqual(deserializedInetHeader, inetHeader) {
+		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", inetHeader, deserializedInetHeader)
+	}
+	
+	// Then: the serialized data has the correct number of bytes
+	if uint32(len(serializedData)) != h.Len {
+		t.Fatalf("Incorrect length len(serializedData)=%d, expected %d", len(serializedData), h.Len)
+	}
+}

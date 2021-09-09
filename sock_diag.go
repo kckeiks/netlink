@@ -3,6 +3,7 @@ package netlink
 import (
 	"bytes"
 	"encoding/binary"
+	"golang.org/x/sys/unix"
 )
 
 const SizeOfMessageWithInetDiagReqV2 = 72
@@ -43,6 +44,22 @@ type InetDiagMsg struct {
 	WQueue  uint32
 	UID     uint32
 	Inode   uint32
+}
+
+func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
+	if nlh.Len != SizeOfMessageWithInetDiagReqV2 {
+		panic("Error: Invalid NlMsghdr.Len.")
+	}
+	b := make([]byte, nlh.Len)
+	byteOrder.PutUint32(b[:4], nlh.Len)
+	byteOrder.PutUint16(b[4:6], nlh.Type)
+	byteOrder.PutUint16(b[6:8], nlh.Flags)
+	byteOrder.PutUint32(b[8:12], nlh.Seq)
+	byteOrder.PutUint32(b[12:16], nlh.Pid)
+
+	ih := SerializeInetDiagReqV2(inetHeader)
+	copy(b[16:], ih)
+	return b
 }
 
 func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {
