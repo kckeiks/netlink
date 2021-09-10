@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"golang.org/x/sys/unix"
 	"os"
-	// "fmt"
 )
 
 var OSPageSize = os.Getpagesize()
