@@ -53,8 +53,8 @@ func TestDeserializeNetlinkMsg(t *testing.T) {
 		t.Fatalf("Given NlMsghdr %+v and deserialized is %+v,", nlmsg.Header, h)
 	}
 	// Then: the extra data was returned
-	if bytes.Compare(nlmsg.Data, data[:]) != 0 {
-		t.Fatalf("Extra data=%d, expected %d", nlmsg.Data, data)
+	if bytes.Compare(nlmsg.Payload, data[:]) != 0 {
+		t.Fatalf("Extra data=%d, expected %d", nlmsg.Payload, data)
 	}
 }
 
@@ -69,8 +69,8 @@ func TestDeserializeNetlinkMsgWithOutData(t *testing.T) {
 	nlmsg := DeserializeNetlinkMsg(serializedData)
 
 	// Then: empty slice is returned for payload
-	if len(nlmsg.Data) != 0 {
-		t.Fatalf("Extra data=%d, expected [].", nlmsg.Data)
+	if len(nlmsg.Payload) != 0 {
+		t.Fatalf("Extra data=%d, expected [].", nlmsg.Payload)
 	}
 }
 
@@ -107,8 +107,8 @@ func TestParseNetlinkMessage(t *testing.T) {
 	result := ParseNetlinkMessage(nlmsgs)
 
 	// Then: We get the messages as expected
-	expectedNlMsg1 := NetlinkMessage{Header: h1, Data: data1[:]}
-	expectedNlMsg2 := NetlinkMessage{Header: h2, Data: data2[:]}
+	expectedNlMsg1 := NetlinkMessage{Header: h1, Payload: data1[:]}
+	expectedNlMsg2 := NetlinkMessage{Header: h2, Payload: data2[:]}
 
 	if !reflect.DeepEqual(result[0], expectedNlMsg1) {
 		t.Fatalf("Given first Netlink Msg %+v but received %+v,", result[0], expectedNlMsg1)

@@ -12,7 +12,7 @@ var OSPageSize = os.Getpagesize()
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr
-	Data []byte
+	Payload []byte
 }
 
 func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
@@ -37,7 +37,7 @@ func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 		panic("Error: Could not deserialize NlMsghdr.")
 	}
 
-	return NetlinkMessage{Header: h, Data: data[unix.SizeofNlMsghdr:]}
+	return NetlinkMessage{Header: h, Payload: data[unix.SizeofNlMsghdr:]}
 }
 
 func ParseNetlinkMessage(data []byte) []NetlinkMessage {

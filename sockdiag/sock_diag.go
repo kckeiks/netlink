@@ -93,7 +93,7 @@ func SendInetQuery(nlmsg []byte) []InetDiagMsg {
 	idmsgs := make([]InetDiagMsg, len(nlmsgs))
 
 	for _, msg := range nlmsgs {
-		idmsgs = append(idmsgs, DeserializeInetDiagMsg(msg.Data))
+		idmsgs = append(idmsgs, DeserializeInetDiagMsg(msg.Payload))
 	}
 
 	return idmsgs
