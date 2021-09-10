@@ -11,50 +11,64 @@ var OSPageSize = os.Getpagesize()
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr
-	Data []byte
+	Payload []byte
 }
 
-func NewEncodedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
-	if h.Len != (uint32(len(data)) + unix.SizeofNlMsghdr) {
-		panic("Error: Invalid NlMsghdr.Len.")
-	}
+func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 	b := make([]byte, h.Len)
-	byteOrder.PutUint32(b[:4], h.Len)
-	byteOrder.PutUint16(b[4:6], h.Type)
-	byteOrder.PutUint16(b[6:8], h.Flags)
-	byteOrder.PutUint32(b[8:12], h.Seq)
-	byteOrder.PutUint32(b[12:16], h.Pid)
-	copy(b[16:], data)
+	ByteOrder.PutUint32(b[:4], h.Len)
+	ByteOrder.PutUint16(b[4:6], h.Type)
+	ByteOrder.PutUint16(b[6:8], h.Flags)
+	ByteOrder.PutUint32(b[8:12], h.Seq)
+	ByteOrder.PutUint32(b[12:16], h.Pid)
 	return b
 }
 
-func ParseNetlinkMsg(data []byte) (unix.NlMsghdr, []byte) {
+func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 	if len(data) < unix.SizeofNlMsghdr {
 		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
 	}
-	
 	serializedData := bytes.NewBuffer(data[:unix.SizeofNlMsghdr])
-	header := unix.NlMsghdr{}
+	h := unix.NlMsghdr{}
 
-	err := binary.Read(serializedData, byteOrder, &header)
+	err := binary.Read(serializedData, ByteOrder, &h)
 	if err != nil {
 		panic("Error: Could not deserialize NlMsghdr.")
 	}
 
-	if len(data) == unix.SizeofNlMsghdr {
-		return header, nil
-	}
-	
-	return header, data[unix.SizeofNlMsghdr:]
+	return NetlinkMessage{Header: h, Payload: data[unix.SizeofNlMsghdr:]}
 }
 
-func ParseNetlinkMsgs(data []byte) []NetlinkMessage {
+func ParseNetlinkMessage(data []byte) []NetlinkMessage {
 	var msgs []NetlinkMessage
 	for len(data) > unix.NLMSG_HDRLEN {
-		l := byteOrder.Uint32(data[:4])
-		h, d := ParseNetlinkMsg(data[:l])
-		msgs = append(msgs, NetlinkMessage{Header: h, Data: d})
+		l := ByteOrder.Uint32(data[:4])
+		nlmsg := DeserializeNetlinkMsg(data[:l])
+		msgs = append(msgs, nlmsg)
 		data = data[l:]
 	}
 	return msgs
+}
+
+func ReceiveMessage(fd int) NetlinkMessage {
+	b := make([]byte, OSPageSize)
+	n, _, _ := unix.Recvfrom(fd, b, 0)
+	return DeserializeNetlinkMsg(b[:n]) 
+}
+
+func ReceiveMultipartMessage(fd int) []NetlinkMessage{
+	var msgs []NetlinkMessage
+	for done := false; !done; {
+		b := make([]byte, OSPageSize)
+		n, _, _ := unix.Recvfrom(fd, b, 0)
+		for _, msg := range ParseNetlinkMessage(b[:n]) {
+			if msg.Header.Type == unix.NLMSG_DONE {
+				done = true
+				break
+			}
+			msgs = append(msgs, msg) 
+		}
+		
+	}
+	return msgs 
 }
