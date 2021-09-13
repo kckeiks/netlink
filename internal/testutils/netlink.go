@@ -9,7 +9,7 @@ var TestByteOrder = binary.LittleEndian
 
 func NewTestNlMsghdr() unix.NlMsghdr {
 	h := unix.NlMsghdr{}
-	h.Len = unix.SizeofNlMsghdr
+	h.Len = unix.NLMSG_HDRLEN 
 	h.Type = 2
 	h.Flags = 5
 	h.Seq = 6
@@ -18,7 +18,7 @@ func NewTestNlMsghdr() unix.NlMsghdr {
 }
 
 func NewTestSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
-	if h.Len != (uint32(len(data)) + unix.SizeofNlMsghdr) {
+	if h.Len != (uint32(len(data)) + unix.NLMSG_HDRLEN ) {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
 	b := make([]byte, h.Len)

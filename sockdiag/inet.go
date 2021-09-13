@@ -52,7 +52,7 @@ func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
 	}
 	msg := netlink.NewSerializedNetlinkMessage(nlh)
 	ih := SerializeInetDiagReqV2(inetHeader)
-	copy(msg[unix.SizeofNlMsghdr:], ih)
+	copy(msg[unix.NLMSG_HDRLEN :], ih)
 	return msg
 }
 
@@ -77,7 +77,7 @@ func DeserializeInetDiagMsg(data []byte) InetDiagMsg {
 }
 
 
-func SendInetQuery(nlmsg []byte) []InetDiagMsg {
+func SendInetMessage(nlmsg []byte) []InetDiagMsg {
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
 		panic("Error creating socket.")
