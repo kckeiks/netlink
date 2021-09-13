@@ -123,12 +123,14 @@ func TestNlmAlignOf(t *testing.T) {
 	var divisor int = 20
 	// Given: a int that is not a divisor of 4
 	var notdivisor int = 22
+
 	// When: we try to round up the integer
 	result := nlmAlignOf(divisor)
-	// THen: we get the same number
+	// Then: we get the same number
 	if result != divisor {
 		t.Fatalf("Received %d but expected %d", result, divisor)
 	}
+	
 	// When: we round up the integers 
 	result = nlmAlignOf(notdivisor)
 	// THen: we round up so that it's divisible by 4
