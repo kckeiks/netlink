@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"golang.org/x/sys/unix"
 	"os"
-	"fmt"
 )
 
 var OSPageSize = os.Getpagesize()
@@ -32,8 +31,6 @@ func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 
 func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 	l := nlmAlignOf(int(ByteOrder.Uint32(data[:4])))
-	fmt.Println(ByteOrder.Uint32(data[:4]))
-	fmt.Println(l)
 	if len(data) < unix.NLMSG_HDRLEN  || l > len(data) {
 		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
 	}
