@@ -85,11 +85,9 @@ func SendInetMessage(nlmsg []byte) []InetDiagMsg {
 
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
 	unix.Sendto(fd, nlmsg, 0, addr)
-
 	nlmsgs := netlink.ReceiveMultipartMessage(fd)
 
-	idmsgs := make([]InetDiagMsg, len(nlmsgs))
-
+	var idmsgs []InetDiagMsg
 	for _, msg := range nlmsgs {
 		idmsgs = append(idmsgs, DeserializeInetDiagMsg(msg.Payload))
 	}
