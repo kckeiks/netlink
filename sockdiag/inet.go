@@ -77,7 +77,7 @@ func DeserializeInetDiagMsg(data []byte) InetDiagMsg {
 }
 
 
-func SendInetQuery(nlmsg []byte) []InetDiagMsg {
+func SendInetMessage(nlmsg []byte) []InetDiagMsg {
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
 		panic("Error creating socket.")

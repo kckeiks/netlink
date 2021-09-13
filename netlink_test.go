@@ -96,7 +96,7 @@ func TestParseNetlinkMessage(t *testing.T) {
 	data1 := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	h1.Len = h1.Len + uint32(len(data1))
 	h2 := testutils.NewTestNlMsghdr()
-	data2 := [6]byte{0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x01}
+	data2 := [8]byte{0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x01, 0x02, 0x02}
 	h2.Len = h2.Len + uint32(len(data2))
 
 	var nlmsgs []byte
@@ -115,5 +115,24 @@ func TestParseNetlinkMessage(t *testing.T) {
 	}
 	if !reflect.DeepEqual(result[1], expectedNlMsg2) {
 		t.Fatalf("Given second Netlink Msg %+v but received %+v,", result[1], expectedNlMsg2)
+	}
+}
+
+func TestNlmAlignOf(t *testing.T) {
+	// Given: a int that is a divisor of 4
+	var divisor int = 20
+	// Given: a int that is not a divisor of 4
+	var notdivisor int = 22
+	// When: we try to round up the integer
+	result := nlmAlignOf(divisor)
+	// THen: we get the same number
+	if result != divisor {
+		t.Fatalf("Received %d but expected %d", result, divisor)
+	}
+	// When: we round up the integers 
+	result = nlmAlignOf(notdivisor)
+	// THen: we round up so that it's divisible by 4
+	if result != 24 {
+		t.Fatalf("Received %d but expected %d", result, 24)
 	}
 }
