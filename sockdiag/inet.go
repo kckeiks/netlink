@@ -52,7 +52,7 @@ func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
 	}
 	msg := netlink.NewSerializedNetlinkMessage(nlh)
 	ih := SerializeInetDiagReqV2(inetHeader)
-	copy(msg[unix.SizeofNlMsghdr:], ih)
+	copy(msg[unix.NLMSG_HDRLEN :], ih)
 	return msg
 }
 
