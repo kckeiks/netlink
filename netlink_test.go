@@ -62,7 +62,7 @@ func TestDeserializeNetlinkMsgWithOutData(t *testing.T) {
 	// Given: a serialized netlink message without extra data
 	h := testutils.NewTestNlMsghdr()
 	data := []byte{} 
-	h.Len = uint32(unix.SizeofNlMsghdr)
+	h.Len = uint32(unix.NLMSG_HDRLEN )
 	serializedData := testutils.NewTestSerializedNetlinkMsg(h, data)
 	
 	// When: we deserialize the message

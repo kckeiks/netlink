@@ -34,10 +34,10 @@ func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 	l := nlmAlignOf(int(ByteOrder.Uint32(data[:4])))
 	fmt.Println(ByteOrder.Uint32(data[:4]))
 	fmt.Println(l)
-	if len(data) < unix.SizeofNlMsghdr || l > len(data) {
+	if len(data) < unix.NLMSG_HDRLEN  || l > len(data) {
 		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
 	}
-	serializedData := bytes.NewBuffer(data[:unix.SizeofNlMsghdr])
+	serializedData := bytes.NewBuffer(data[:unix.NLMSG_HDRLEN ])
 	h := unix.NlMsghdr{}
 
 	err := binary.Read(serializedData, ByteOrder, &h)
@@ -45,7 +45,7 @@ func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 		panic("Error: Could not deserialize NlMsghdr.")
 	}
 
-	return NetlinkMessage{Header: h, Payload: data[unix.SizeofNlMsghdr:]}
+	return NetlinkMessage{Header: h, Payload: data[unix.NLMSG_HDRLEN :]}
 }
 
 func ParseNetlinkMessage(data []byte) []NetlinkMessage {
