@@ -31,7 +31,7 @@ func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 
 func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
 	l := nlmAlignOf(int(ByteOrder.Uint32(data[:4])))
-	if len(data) < unix.NLMSG_HDRLEN  || l > len(data) {
+	if len(data) < unix.NLMSG_HDRLEN || l > len(data) {
 		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
 	}
 	serializedData := bytes.NewBuffer(data[:unix.NLMSG_HDRLEN ])
@@ -66,7 +66,7 @@ func ReceiveMultipartMessage(fd int) []NetlinkMessage{
 	var msgs []NetlinkMessage
 	for done := false; !done; {
 		b := make([]byte, OSPageSize)
-		n, _, _ := unix.Recvfrom(fd, b, 0)
+		n, _, _ := unix.Recvfrom(fd, b, 0) 
 		for _, msg := range ParseNetlinkMessage(b[:n]) {
 			if msg.Header.Type == unix.NLMSG_DONE {
 				done = true
