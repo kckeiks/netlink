@@ -111,7 +111,7 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 func TestDeserializeInetDiagMsg(t *testing.T) {
 	// Given: a serialized InetDiagMsg
 	msg := newTestInetDiagMsg()
-	serializedData := bytes.NewBuffer(make([]byte, sizeOfInetDiagMsg))
+	serializedData := bytes.NewBuffer(make([]byte, NL_INET_DIAG_MSG_LEN))
 	serializedData.Reset()
 	binary.Write(serializedData, testutils.TestByteOrder, &msg)
 
@@ -142,7 +142,7 @@ func TestNewInetNetlinkMsg(t *testing.T) {
 	// Given: a NlMsghdr header and some data in bytes
 	h := testutils.NewTestNlMsghdr()
 	inetHeader := newTestInetDiagReqV2()
-	h.Len = SizeOfMessageWithInetDiagReqV2
+	h.Len = NL_INET_DIAG_REQ_V2_MSG_LEN
 
 	// When: we serialize the header and the data
 	serializedData := NewInetNetlinkMsg(h, inetHeader)

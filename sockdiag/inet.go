@@ -7,20 +7,21 @@ import (
 	"github.com/kckeiks/netlink"
 )
 
-const SizeOfMessageWithInetDiagReqV2 = 72
-const sizeOfInetDiagReqV2 = 56
-const sizeOfInetDiagMsg = 72
+const (
+	INET_DIAG_REQ_V2_LEN        = 56
+	NL_INET_DIAG_REQ_V2_MSG_LEN = 72 // includes netlink header
+	NL_INET_DIAG_MSG_LEN        = 72
+)
 
 type InetDiagSockID struct {
-	SPort  [2]byte   // source port          __be16  idiag_sport;
+	SPort  [2]byte    // source port          __be16  idiag_sport;
 	DPort  [2]byte    // destination port     __be16  idiag_dport;
-	Src    [16]byte  // source address       __be32  idiag_src[4];
-	Dst    [16]byte  // destination address  __be32  idiag_dst[4];
+	Src    [16]byte   // source address       __be32  idiag_src[4];
+	Dst    [16]byte   // destination address  __be32  idiag_dst[4];
 	If     uint32
 	Cookie [2]uint32
 }
 
-// inet request structure
 type InetDiagReqV2 struct {
 	Family   uint8
 	Protocol uint8
@@ -30,15 +31,12 @@ type InetDiagReqV2 struct {
 	ID       InetDiagSockID
 }
 
-// inet response structure
 type InetDiagMsg struct {
 	Family  uint8
 	State   uint8
 	Timer   uint8
 	Retrans uint8
-
 	ID InetDiagSockID
-
 	Expires uint32
 	RQueue  uint32
 	WQueue  uint32
@@ -47,7 +45,7 @@ type InetDiagMsg struct {
 }
 
 func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
-	if nlh.Len != SizeOfMessageWithInetDiagReqV2 {
+	if nlh.Len != NL_INET_DIAG_REQ_V2_MSG_LEN {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
 	msg := netlink.NewSerializedNetlinkMessage(nlh)
@@ -57,7 +55,7 @@ func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
 }
 
 func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {
-	b := bytes.NewBuffer(make([]byte, sizeOfInetDiagReqV2))
+	b := bytes.NewBuffer(make([]byte, INET_DIAG_REQ_V2_LEN))
 	b.Reset()
 	err := binary.Write(b, netlink.ByteOrder, req)
 	if err != nil {
@@ -82,15 +80,12 @@ func SendInetMessage(nlmsg []byte) []InetDiagMsg {
 	if err != nil {
 		panic("Error creating socket.")
 	}
-
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
 	unix.Sendto(fd, nlmsg, 0, addr)
 	nlmsgs := netlink.ReceiveMultipartMessage(fd)
-
 	var idmsgs []InetDiagMsg
 	for _, msg := range nlmsgs {
 		idmsgs = append(idmsgs, DeserializeInetDiagMsg(msg.Payload))
 	}
-
 	return idmsgs
 }

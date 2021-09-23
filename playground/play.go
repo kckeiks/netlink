@@ -2,7 +2,6 @@ package main
 
 import (
     "fmt"
-    // "github.com/kckeiks/netlink"
 	"github.com/kckeiks/netlink/sockdiag"
     "golang.org/x/sys/unix"
 )
@@ -15,7 +14,7 @@ func main() {
 	}
 
 	h := unix.NlMsghdr{
-		Len: sockdiag.SizeOfMessageWithInetDiagReqV2,
+		Len: sockdiag.NL_INET_DIAG_REQ_V2_MSG_LEN,
 		Type: sockdiag.SOCK_DIAG_BY_FAMILY,
 		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
 		Pid: 0,
