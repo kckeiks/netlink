@@ -15,8 +15,6 @@ My motivation for creating this library was that I could not find one that had t
 
 ## Example
 
-This example uses both  `sock_diag`
-
 ```
 package main
 
