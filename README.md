@@ -22,7 +22,7 @@ package main
 
 import (
     "fmt"
-	"github.com/kckeiks/netlink/sockdiag"
+    "github.com/kckeiks/netlink/sockdiag"
     "golang.org/x/sys/unix"
 )
 
