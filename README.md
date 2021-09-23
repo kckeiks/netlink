@@ -13,6 +13,43 @@ My motivation for creating this library was that I could not find one that had t
 
 * The `sock_diag` package has serializers and request constructors for the netlink family, `NETLINK_SOCK_DIAG`. Please see [sock_diag](https://man7.org/linux/man-pages/man7/sock_diag.7.html).
 
+## Example
+
+This example uses both  `sock_diag`
+
+```
+package main
+
+import (
+    "fmt"
+	"github.com/kckeiks/netlink/sockdiag"
+    "golang.org/x/sys/unix"
+)
+
+func main() {
+	inetReq := sockdiag.InetDiagReqV2{
+		Family: unix.AF_INET,
+		Protocol: unix.IPPROTO_TCP,
+		States: ^uint32(0),
+	}
+
+	h := unix.NlMsghdr{
+		Len: sockdiag.NL_INET_DIAG_REQ_V2_MSG_LEN,
+		Type: sockdiag.SOCK_DIAG_BY_FAMILY,
+		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
+		Pid: 0,
+	}
+
+	nlmsg := sockdiag.NewInetNetlinkMsg(h, inetReq)
+
+	for _, msg := range sockdiag.SendInetMessage(nlmsg) {
+		fmt.Printf("InetDiagMsg: %+v\n", msg)
+	}
+}
+
+```
+
 ## Work In Progress
 
 Most of the heavy lifting has been done and the package `sock_diag` is close to been complete. The most important thing left to do is to implement some proper error handling.
+
