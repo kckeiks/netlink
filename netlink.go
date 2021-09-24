@@ -66,7 +66,8 @@ func ReceiveMultipartMessage(fd int) []NetlinkMessage{
 	var msgs []NetlinkMessage
 	for done := false; !done; {
 		b := make([]byte, OSPageSize)
-		n, _, _ := unix.Recvfrom(fd, b, 0) 
+		n, _, _ := unix.Recvfrom(fd, b, 0)
+		// TODO: Check that this does not return 0
 		for _, msg := range ParseNetlinkMessage(b[:n]) {
 			if msg.Header.Type == unix.NLMSG_DONE {
 				done = true
@@ -77,4 +78,26 @@ func ReceiveMultipartMessage(fd int) []NetlinkMessage{
 		
 	}
 	return msgs 
+}
+
+func ReceiveNetlinkMessage(fd int) []NetlinkMessage{
+	nlmsgs := make([]NetlinkMessage, 0)
+	buf := make([]byte, OSPageSize)
+	r, _, _ := unix.Recvfrom(fd, buf, 0)
+	buf = buf[:r]
+	if len(buf) <= unix.NLMSG_HDRLEN {
+		panic("Error: Invalid length of first Nl MSG.")
+	}
+	firstMsgLen := ByteOrder.Uint32(buf[:4])
+	firstMsg := DeserializeNetlinkMsg(buf[:firstMsgLen])
+	buf = buf[firstMsgLen:]
+	nlmsgs = append(nlmsgs, firstMsg)
+	if firstMsg.Header.Flags != unix.NLM_F_MULTI {
+		return nlmsgs
+	}
+	// Handle multi-part message
+	responseMsgs := ParseNetlinkMessage(buf)
+	nlmsgs = append(nlmsgs, responseMsgs...)
+	responseMsgs = ReceiveMultipartMessage(fd)
+	return append(nlmsgs, responseMsgs...)
 }
