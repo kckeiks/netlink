@@ -68,7 +68,15 @@ func ReceiveMultipartMessage(fd int) []NetlinkMessage{
 		b := make([]byte, OSPageSize)
 		n, _, _ := unix.Recvfrom(fd, b, 0)
 		// TODO: Check that this does not return 0
-		for _, msg := range ParseNetlinkMessage(b[:n]) {
+		for {
+			// msg, err :=  getNextNetlingMessage where err could be:
+			// len(b) <= nlmsghdrlen || or desrializer isse
+			// basically issues that can happen when desiarilising 
+			//	l := ByteOrder.Uint32(b[:4])
+			//  return DeserializeNetlinkMsg(b[:l])
+
+			// e.g. ParseNetlinkMessage doesnt add value
+			
 			if msg.Header.Type == unix.NLMSG_DONE {
 				done = true
 				break
@@ -100,4 +108,11 @@ func ReceiveNetlinkMessage(fd int) []NetlinkMessage{
 	nlmsgs = append(nlmsgs, responseMsgs...)
 	responseMsgs = ReceiveMultipartMessage(fd)
 	return append(nlmsgs, responseMsgs...)
+}
+
+
+// TODO: this should do some validation on length of b
+func getNextNetlingMessage(b []byte) (NetlinkMessage, uint32, error) {
+	l := ByteOrder.Uint32(b[:4])
+	return DeserializeNetlinkMsg(b[:l]), l, nil
 }
