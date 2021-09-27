@@ -8,12 +8,11 @@ import (
 	"errors"
 )
 
+var ByteOrder = binary.LittleEndian
 var NlmsgAlignTo uint32 = 4
 var OSPageSize = os.Getpagesize()
 var NlMsgDoesNotFit = errors.New("nlmsg does not fit into buffer")
 var NlMsgHeaderError = errors.New("nlmsghdr error")
-
-
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr
