@@ -104,7 +104,7 @@ func TestParseNetlinkMessage(t *testing.T) {
 	nlmsgs = append(nlmsgs, testutils.NewTestSerializedNetlinkMsg(h2, data2[:])...)
 
 	// When: parse these serialized data
-	result := ParseNetlinkMessage(nlmsgs)
+	result, _ := ParseNetlinkMessage(nlmsgs)
 
 	// Then: We get the messages as expected
 	expectedNlMsg1 := NetlinkMessage{Header: h1, Payload: data1[:]}
@@ -120,9 +120,9 @@ func TestParseNetlinkMessage(t *testing.T) {
 
 func TestNlmAlignOf(t *testing.T) {
 	// Given: a int that is a divisor of 4
-	var divisor int = 20
+	var divisor uint32 = 20
 	// Given: a int that is not a divisor of 4
-	var notdivisor int = 22
+	var notdivisor uint32 = 22
 
 	// When: we try to round up the integer
 	result := nlmAlignOf(divisor)
