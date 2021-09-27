@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+var NlmsgAlignTo uint32 = 4
 var OSPageSize = os.Getpagesize()
 
 type NetlinkMessage struct {
@@ -15,8 +16,8 @@ type NetlinkMessage struct {
 }
 
 // Round the length of a netlink message
-func nlmAlignOf(msglen int) int {
-	return (msglen + unix.NLMSG_ALIGNTO - 1) & ^(unix.NLMSG_ALIGNTO - 1)
+func nlmAlignOf(msglen uint32) uint32 {
+	return (msglen + NlmsgAlignTo - 1) & ^(NlmsgAlignTo - 1)
 }
 
 func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
@@ -30,30 +31,33 @@ func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 }
 
 func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
-	l := nlmAlignOf(int(ByteOrder.Uint32(data[:4])))
-	if len(data) < unix.NLMSG_HDRLEN || l > len(data) {
-		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
+	len := nlmAlignOf(ByteOrder.Uint32(data[:4]))
+	if !IsOkToDeserialize(data, len) {
+		panic("Error: Could not deserialize NlMsghdrr.")
 	}
-	serializedData := bytes.NewBuffer(data[:unix.NLMSG_HDRLEN ])
+	serializedData := bytes.NewBuffer(data[:unix.NLMSG_HDRLEN])
 	h := unix.NlMsghdr{}
-
 	err := binary.Read(serializedData, ByteOrder, &h)
 	if err != nil {
 		panic("Error: Could not deserialize NlMsghdr.")
 	}
-
-	return NetlinkMessage{Header: h, Payload: data[unix.NLMSG_HDRLEN :]}
+	return NetlinkMessage{Header: h, Payload: data[unix.NLMSG_HDRLEN:len]}
 }
 
-func ParseNetlinkMessage(data []byte) []NetlinkMessage {
-	var msgs []NetlinkMessage
-	for len(data) > unix.NLMSG_HDRLEN {
-		l := ByteOrder.Uint32(data[:4])
-		nlmsg := DeserializeNetlinkMsg(data[:l])
-		msgs = append(msgs, nlmsg)
-		data = data[l:]
+func IsOkToDeserialize(data []byte, nlmsglen uint32) bool {
+	bufLen := uint32(len(data))
+	return unix.NLMSG_HDRLEN <= bufLen && nlmsglen >= unix.NLMSG_HDRLEN && bufLen >= nlmsglen
+}
+
+func ParseNetlinkMessage(data []byte) ([]NetlinkMessage, error) {
+	nlmsgs := make([]NetlinkMessage, 0)
+	for len(data) >= unix.NLMSG_HDRLEN {
+		len := ByteOrder.Uint32(data[:4])
+		msg := DeserializeNetlinkMsg(data[:len])
+		nlmsgs = append(nlmsgs, msg)
+		data = data[len:]
 	}
-	return msgs
+	return nlmsgs, nil
 }
 
 func ReceiveMessage(fd int) NetlinkMessage {
@@ -62,57 +66,28 @@ func ReceiveMessage(fd int) NetlinkMessage {
 	return DeserializeNetlinkMsg(b[:n]) 
 }
 
-func ReceiveMultipartMessage(fd int) []NetlinkMessage{
-	var msgs []NetlinkMessage
+func ReceiveNetlinkMessage(fd int) []NetlinkMessage {
+	nlmsgs := make([]NetlinkMessage, 0)
 	for done := false; !done; {
 		b := make([]byte, OSPageSize)
-		n, _, _ := unix.Recvfrom(fd, b, 0)
-		// TODO: Check that this does not return 0
-		for {
-			// msg, err :=  getNextNetlingMessage where err could be:
-			// len(b) <= nlmsghdrlen || or desrializer isse
-			// basically issues that can happen when desiarilising 
-			//	l := ByteOrder.Uint32(b[:4])
-			//  return DeserializeNetlinkMsg(b[:l])
-
-			// e.g. ParseNetlinkMessage doesnt add value
-			
+		r, _, _ := unix.Recvfrom(fd, b, 0)
+		if r == 0 {
+			return nlmsgs
+		}
+		parsedMsgs, err := ParseNetlinkMessage(b[:r])
+		if err != nil {
+			return nil
+		}
+		for _, msg := range parsedMsgs {
 			if msg.Header.Type == unix.NLMSG_DONE {
 				done = true
 				break
 			}
-			msgs = append(msgs, msg) 
+			if msg.Header.Type == unix.NLMSG_ERROR {
+				return nil
+			}
+			nlmsgs = append(nlmsgs, msg)
 		}
-		
 	}
-	return msgs 
-}
-
-func ReceiveNetlinkMessage(fd int) []NetlinkMessage{
-	nlmsgs := make([]NetlinkMessage, 0)
-	buf := make([]byte, OSPageSize)
-	r, _, _ := unix.Recvfrom(fd, buf, 0)
-	buf = buf[:r]
-	if len(buf) <= unix.NLMSG_HDRLEN {
-		panic("Error: Invalid length of first Nl MSG.")
-	}
-	firstMsgLen := ByteOrder.Uint32(buf[:4])
-	firstMsg := DeserializeNetlinkMsg(buf[:firstMsgLen])
-	buf = buf[firstMsgLen:]
-	nlmsgs = append(nlmsgs, firstMsg)
-	if firstMsg.Header.Flags != unix.NLM_F_MULTI {
-		return nlmsgs
-	}
-	// Handle multi-part message
-	responseMsgs := ParseNetlinkMessage(buf)
-	nlmsgs = append(nlmsgs, responseMsgs...)
-	responseMsgs = ReceiveMultipartMessage(fd)
-	return append(nlmsgs, responseMsgs...)
-}
-
-
-// TODO: this should do some validation on length of b
-func getNextNetlingMessage(b []byte) (NetlinkMessage, uint32, error) {
-	l := ByteOrder.Uint32(b[:4])
-	return DeserializeNetlinkMsg(b[:l]), l, nil
+	return nlmsgs
 }
