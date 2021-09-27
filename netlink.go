@@ -5,10 +5,15 @@ import (
 	"encoding/binary"
 	"golang.org/x/sys/unix"
 	"os"
+	"errors"
 )
 
 var NlmsgAlignTo uint32 = 4
 var OSPageSize = os.Getpagesize()
+var NlMsgDoesNotFit = errors.New("nlmsg does not fit into buffer")
+var NlMsgHeaderError = errors.New("nlmsghdr error")
+
+
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr
@@ -30,18 +35,18 @@ func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 	return b
 }
 
-func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
+func DeserializeNetlinkMsg(data []byte) (*NetlinkMessage, error) {
 	len := nlmAlignOf(ByteOrder.Uint32(data[:4]))
 	if !IsOkToDeserialize(data, len) {
-		panic("Error: Could not deserialize NlMsghdrr.")
+		return nil, NlMsgDoesNotFit
 	}
 	serializedData := bytes.NewBuffer(data[:unix.NLMSG_HDRLEN])
 	h := unix.NlMsghdr{}
 	err := binary.Read(serializedData, ByteOrder, &h)
 	if err != nil {
-		panic("Error: Could not deserialize NlMsghdr.")
+		return nil, err
 	}
-	return NetlinkMessage{Header: h, Payload: data[unix.NLMSG_HDRLEN:len]}
+	return &NetlinkMessage{Header: h, Payload: data[unix.NLMSG_HDRLEN:len]}, nil
 }
 
 func IsOkToDeserialize(data []byte, nlmsglen uint32) bool {
@@ -53,30 +58,33 @@ func ParseNetlinkMessage(data []byte) ([]NetlinkMessage, error) {
 	nlmsgs := make([]NetlinkMessage, 0)
 	for len(data) >= unix.NLMSG_HDRLEN {
 		len := ByteOrder.Uint32(data[:4])
-		msg := DeserializeNetlinkMsg(data[:len])
-		nlmsgs = append(nlmsgs, msg)
+		msg, err := DeserializeNetlinkMsg(data[:len])
+		if err != nil {
+			return nil, err
+		}
+		nlmsgs = append(nlmsgs, *msg)
 		data = data[len:]
 	}
 	return nlmsgs, nil
 }
 
-func ReceiveMessage(fd int) NetlinkMessage {
+func ReceiveMessage(fd int) (*NetlinkMessage, error) {
 	b := make([]byte, OSPageSize)
 	n, _, _ := unix.Recvfrom(fd, b, 0)
-	return DeserializeNetlinkMsg(b[:n]) 
+	return DeserializeNetlinkMsg(b[:n])
 }
 
-func ReceiveNetlinkMessage(fd int) []NetlinkMessage {
+func ReceiveNetlinkMessage(fd int) ([]NetlinkMessage, error) {
 	nlmsgs := make([]NetlinkMessage, 0)
 	for done := false; !done; {
 		b := make([]byte, OSPageSize)
 		r, _, _ := unix.Recvfrom(fd, b, 0)
 		if r == 0 {
-			return nlmsgs
+			return nlmsgs, nil
 		}
 		parsedMsgs, err := ParseNetlinkMessage(b[:r])
 		if err != nil {
-			return nil
+			return nil, err
 		}
 		for _, msg := range parsedMsgs {
 			if msg.Header.Type == unix.NLMSG_DONE {
@@ -84,10 +92,10 @@ func ReceiveNetlinkMessage(fd int) []NetlinkMessage {
 				break
 			}
 			if msg.Header.Type == unix.NLMSG_ERROR {
-				return nil
+				return nil, NlMsgHeaderError
 			}
 			nlmsgs = append(nlmsgs, msg)
 		}
 	}
-	return nlmsgs
+	return nlmsgs, nil
 }

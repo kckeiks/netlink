@@ -75,17 +75,20 @@ func DeserializeInetDiagMsg(data []byte) InetDiagMsg {
 }
 
 
-func SendInetMessage(nlmsg []byte) []InetDiagMsg {
+func SendInetMessage(nlmsg []byte) ([]InetDiagMsg, error) {
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
 		panic("Error creating socket.")
 	}
 	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
 	unix.Sendto(fd, nlmsg, 0, addr)
-	nlmsgs := netlink.ReceiveNetlinkMessage(fd)
+	nlmsgs, err := netlink.ReceiveNetlinkMessage(fd)
+	if err != nil {
+		return nil, err
+	}
 	var idmsgs []InetDiagMsg
 	for _, msg := range nlmsgs {
 		idmsgs = append(idmsgs, DeserializeInetDiagMsg(msg.Payload))
 	}
-	return idmsgs
+	return idmsgs, nil
 }

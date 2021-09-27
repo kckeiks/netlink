@@ -22,7 +22,9 @@ func main() {
 
 	nlmsg := sockdiag.NewInetNetlinkMsg(h, inetReq)
 
-	for _, msg := range sockdiag.SendInetMessage(nlmsg) {
+	result, _ := sockdiag.SendInetMessage(nlmsg)
+
+	for _, msg := range result {
 		fmt.Printf("InetDiagMsg: %+v\n", msg)
 	}
 }

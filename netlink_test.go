@@ -44,10 +44,12 @@ func TestDeserializeNetlinkMsg(t *testing.T) {
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
 	h.Len = h.Len + uint32(len(data))
 	serializedData := testutils.NewTestSerializedNetlinkMsg(h, data[:])
-	
 	// When: we deserialize the message
-	nlmsg := DeserializeNetlinkMsg(serializedData)
-
+	nlmsg, err := DeserializeNetlinkMsg(serializedData)
+	// Then: there is no error
+	if err != nil {
+		t.Fatalf("Rcvd an unexpected error.")
+	}
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(nlmsg.Header, h) {
 		t.Fatalf("Given NlMsghdr %+v and deserialized is %+v,", nlmsg.Header, h)
@@ -64,10 +66,12 @@ func TestDeserializeNetlinkMsgWithOutData(t *testing.T) {
 	data := []byte{} 
 	h.Len = uint32(unix.NLMSG_HDRLEN )
 	serializedData := testutils.NewTestSerializedNetlinkMsg(h, data)
-	
 	// When: we deserialize the message
-	nlmsg := DeserializeNetlinkMsg(serializedData)
-
+	nlmsg, err := DeserializeNetlinkMsg(serializedData)
+	// Then: there is no error
+	if err != nil {
+		t.Fatalf("Rcvd an unexpected error.")
+	}
 	// Then: empty slice is returned for payload
 	if len(nlmsg.Payload) != 0 {
 		t.Fatalf("Extra data=%d, expected [].", nlmsg.Payload)
