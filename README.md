@@ -15,37 +15,7 @@ My motivation for creating this library was that I could not find one that had t
 
 ## Example
 
-```
-package main
-
-import (
-    "fmt"
-    "github.com/kckeiks/netlink/sockdiag"
-    "golang.org/x/sys/unix"
-)
-
-func main() {
-	inetReq := sockdiag.InetDiagReqV2{
-		Family: unix.AF_INET,
-		Protocol: unix.IPPROTO_TCP,
-		States: ^uint32(0),
-	}
-
-	h := unix.NlMsghdr{
-		Len: sockdiag.NlInetDiagReqV2MsgLen,
-		Type: sockdiag.SOCK_DIAG_BY_FAMILY,
-		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
-		Pid: 0,
-	}
-
-	nlmsg := sockdiag.NewInetNetlinkMsg(h, inetReq)
-
-	for _, msg := range sockdiag.SendInetMessage(nlmsg) {
-		fmt.Printf("InetDiagMsg: %+v\n", msg)
-	}
-}
-
-```
+In the playground directory, you can find different examples on how these packages are used.
 
 ## Work In Progress
 
