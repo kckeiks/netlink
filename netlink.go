@@ -4,10 +4,17 @@ import (
 	"bytes"
 	"encoding/binary"
 	"golang.org/x/sys/unix"
-	"os"
+	"errors"
 )
 
-var OSPageSize = os.Getpagesize()
+var ByteOrder = binary.LittleEndian
+
+var NlmsgAlignTo uint32 = 4
+
+var (
+	NlMsgDoesNotFit = errors.New("nlmsg does not fit into buffer")
+	NlMsgHeaderError = errors.New("nlmsghdr error")
+)
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr
@@ -15,8 +22,8 @@ type NetlinkMessage struct {
 }
 
 // Round the length of a netlink message
-func nlmAlignOf(msglen int) int {
-	return (msglen + unix.NLMSG_ALIGNTO - 1) & ^(unix.NLMSG_ALIGNTO - 1)
+func nlmAlignOf(msglen uint32) uint32 {
+	return (msglen + NlmsgAlignTo - 1) & ^(NlmsgAlignTo - 1)
 }
 
 func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
@@ -29,52 +36,35 @@ func NewSerializedNetlinkMessage(h unix.NlMsghdr) []byte {
 	return b
 }
 
-func DeserializeNetlinkMsg(data []byte) NetlinkMessage {
-	l := nlmAlignOf(int(ByteOrder.Uint32(data[:4])))
-	if len(data) < unix.NLMSG_HDRLEN || l > len(data) {
-		panic("Error: Could not deserialize. Invalid length for serialized NlMsghdr.")
+func DeserializeNetlinkMsg(data []byte) (*NetlinkMessage, error) {
+	len := nlmAlignOf(ByteOrder.Uint32(data[:4]))
+	if !IsOkToParse(data, len) {
+		return nil, NlMsgDoesNotFit
 	}
-	serializedData := bytes.NewBuffer(data[:unix.NLMSG_HDRLEN ])
+	serializedData := bytes.NewBuffer(data[:unix.NLMSG_HDRLEN])
 	h := unix.NlMsghdr{}
-
 	err := binary.Read(serializedData, ByteOrder, &h)
 	if err != nil {
-		panic("Error: Could not deserialize NlMsghdr.")
+		return nil, err
 	}
-
-	return NetlinkMessage{Header: h, Payload: data[unix.NLMSG_HDRLEN :]}
+	return &NetlinkMessage{Header: h, Payload: data[unix.NLMSG_HDRLEN:len]}, nil
 }
 
-func ParseNetlinkMessage(data []byte) []NetlinkMessage {
-	var msgs []NetlinkMessage
-	for len(data) > unix.NLMSG_HDRLEN {
-		l := ByteOrder.Uint32(data[:4])
-		nlmsg := DeserializeNetlinkMsg(data[:l])
-		msgs = append(msgs, nlmsg)
-		data = data[l:]
-	}
-	return msgs
+func IsOkToParse(data []byte, nlmsglen uint32) bool {
+	bufLen := uint32(len(data))
+	return unix.NLMSG_HDRLEN <= bufLen && nlmsglen >= unix.NLMSG_HDRLEN && bufLen >= nlmsglen
 }
 
-func ReceiveMessage(fd int) NetlinkMessage {
-	b := make([]byte, OSPageSize)
-	n, _, _ := unix.Recvfrom(fd, b, 0)
-	return DeserializeNetlinkMsg(b[:n]) 
-}
-
-func ReceiveMultipartMessage(fd int) []NetlinkMessage{
-	var msgs []NetlinkMessage
-	for done := false; !done; {
-		b := make([]byte, OSPageSize)
-		n, _, _ := unix.Recvfrom(fd, b, 0) 
-		for _, msg := range ParseNetlinkMessage(b[:n]) {
-			if msg.Header.Type == unix.NLMSG_DONE {
-				done = true
-				break
-			}
-			msgs = append(msgs, msg) 
+func ParseNetlinkMessage(data []byte) ([]NetlinkMessage, error) {
+	nlmsgs := make([]NetlinkMessage, 0)
+	for len(data) >= unix.NLMSG_HDRLEN {
+		len := ByteOrder.Uint32(data[:4])
+		msg, err := DeserializeNetlinkMsg(data[:len])
+		if err != nil {
+			return nil, err
 		}
-		
+		nlmsgs = append(nlmsgs, *msg)
+		data = data[len:]
 	}
-	return msgs 
+	return nlmsgs, nil
 }

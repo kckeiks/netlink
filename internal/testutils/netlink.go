@@ -10,7 +10,7 @@ var TestByteOrder = binary.LittleEndian
 func NewTestNlMsghdr() unix.NlMsghdr {
 	h := unix.NlMsghdr{}
 	h.Len = unix.NLMSG_HDRLEN 
-	h.Type = 2
+	h.Type = 0
 	h.Flags = 5
 	h.Seq = 6
 	h.Pid = 11
