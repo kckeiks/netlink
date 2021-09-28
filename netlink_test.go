@@ -13,10 +13,8 @@ func TestNewSerializedNetlinkMessage(t *testing.T) {
 	h := testutils.NewTestNlMsghdr()
 	// Given: length of nl msg with 4 more bytes of space 
 	h.Len = 16 + 4
-
 	// When: we serialize the header and the data
 	serializedData := NewSerializedNetlinkMessage(h)
-
 	// Then: the message was serialized with the correct data
 	if h.Len != testutils.TestByteOrder.Uint32(serializedData[:4]) {
 		t.Fatalf("NlMsghdr.Length = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[:4]), h.Len)
@@ -102,18 +100,14 @@ func TestParseNetlinkMessage(t *testing.T) {
 	h2 := testutils.NewTestNlMsghdr()
 	data2 := [8]byte{0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x01, 0x02, 0x02}
 	h2.Len = h2.Len + uint32(len(data2))
-
 	var nlmsgs []byte
 	nlmsgs = append(nlmsgs, testutils.NewTestSerializedNetlinkMsg(h1, data1[:])...)
 	nlmsgs = append(nlmsgs, testutils.NewTestSerializedNetlinkMsg(h2, data2[:])...)
-
 	// When: parse these serialized data
 	result, _ := ParseNetlinkMessage(nlmsgs)
-
 	// Then: We get the messages as expected
 	expectedNlMsg1 := NetlinkMessage{Header: h1, Payload: data1[:]}
 	expectedNlMsg2 := NetlinkMessage{Header: h2, Payload: data2[:]}
-
 	if !reflect.DeepEqual(result[0], expectedNlMsg1) {
 		t.Fatalf("Given first Netlink Msg %+v but received %+v,", result[0], expectedNlMsg1)
 	}
@@ -127,14 +121,12 @@ func TestNlmAlignOf(t *testing.T) {
 	var divisor uint32 = 20
 	// Given: a int that is not a divisor of 4
 	var notdivisor uint32 = 22
-
 	// When: we try to round up the integer
 	result := nlmAlignOf(divisor)
 	// Then: we get the same number
 	if result != divisor {
 		t.Fatalf("Received %d but expected %d", result, divisor)
 	}
-	
 	// When: we round up the integers 
 	result = nlmAlignOf(notdivisor)
 	// THen: we round up so that it's divisible by 4
