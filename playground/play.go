@@ -8,7 +8,6 @@ import (
 	"os"
 )
 
-
 func SendInetMessage(nlmsg []byte) ([]sockdiag.InetDiagMsg, error) {
 	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
 	if err != nil {
@@ -27,7 +26,6 @@ func SendInetMessage(nlmsg []byte) ([]sockdiag.InetDiagMsg, error) {
 	}
 	return idmsgs, nil
 }
-
 
 func ReceiveNetlinkMessage(fd int) ([]netlink.NetlinkMessage, error) {
 	nlmsgs := make([]netlink.NetlinkMessage, 0)
@@ -61,18 +59,14 @@ func main() {
 		Protocol: unix.IPPROTO_TCP,
 		States: ^uint32(0),
 	}
-
 	h := unix.NlMsghdr{
 		Len: sockdiag.NlInetDiagReqV2MsgLen,
 		Type: sockdiag.SOCK_DIAG_BY_FAMILY,
 		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
 		Pid: 0,
 	}
-
 	nlmsg, _ := sockdiag.NewInetNetlinkMsg(h, inetReq)
-
 	result, _ := SendInetMessage(nlmsg)
-
 	for _, msg := range result {
 		fmt.Printf("InetDiagMsg: %+v\n", msg)
 	}
