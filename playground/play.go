@@ -22,7 +22,8 @@ func SendInetMessage(nlmsg []byte) ([]sockdiag.InetDiagMsg, error) {
 	}
 	var idmsgs []sockdiag.InetDiagMsg
 	for _, msg := range nlmsgs {
-		idmsgs = append(idmsgs, sockdiag.DeserializeInetDiagMsg(msg.Payload))
+		inetMsg, _ := sockdiag.DeserializeInetDiagMsg(msg.Payload)
+		idmsgs = append(idmsgs, *inetMsg)
 	}
 	return idmsgs, nil
 }

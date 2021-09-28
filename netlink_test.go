@@ -46,7 +46,7 @@ func TestDeserializeNetlinkMsg(t *testing.T) {
 	nlmsg, err := DeserializeNetlinkMsg(serializedData)
 	// Then: there is no error
 	if err != nil {
-		t.Fatalf("Rcvd an unexpected error.")
+		t.Fatalf("got an unexpected error %v.", err)
 	}
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(nlmsg.Header, h) {
@@ -68,7 +68,7 @@ func TestDeserializeNetlinkMsgWithOutData(t *testing.T) {
 	nlmsg, err := DeserializeNetlinkMsg(serializedData)
 	// Then: there is no error
 	if err != nil {
-		t.Fatalf("Rcvd an unexpected error.")
+		t.Fatalf("got an unexpected error %v.", err)
 	}
 	// Then: empty slice is returned for payload
 	if len(nlmsg.Payload) != 0 {

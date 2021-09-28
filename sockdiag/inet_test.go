@@ -66,7 +66,10 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
 	req := newTestInetDiagReqV2()
 	// When: we serialize the header
-	serializedData := SerializeInetDiagReqV2(req)
+	serializedData, err := SerializeInetDiagReqV2(req)
+	if err != nil {
+		t.Fatalf("got an unexpected error %v.", err)
+	}
 	// Then: it's serialized with the correct data
 	if req.Family != serializedData[0] {
 		t.Fatalf("InetDiagReqV2.Family = %d, expected %d", serializedData[0], req.Family)
@@ -113,9 +116,13 @@ func TestDeserializeInetDiagMsg(t *testing.T) {
 	serializedData.Reset()
 	binary.Write(serializedData, testutils.TestByteOrder, &msg)
 	// When: we deserialize
-	result := DeserializeInetDiagMsg(serializedData.Bytes())
+	result, err := DeserializeInetDiagMsg(serializedData.Bytes())
+	// Then: there is no error
+	if err != nil {
+		t.Fatalf("got an unexpected error %v.", err)
+	}
 	// Then: the struct that we get has the same values as the initial struct
-	if !reflect.DeepEqual(result, msg) {
+	if !reflect.DeepEqual(result, &msg) {
 		t.Fatalf("Given InetDiagMsg %+v but expected %+v,", result, msg)
 	}
 }
@@ -123,7 +130,10 @@ func TestDeserializeInetDiagMsg(t *testing.T) {
 func TestDeserializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
 	req := newTestInetDiagReqV2()
-	serializedData := SerializeInetDiagReqV2(req)
+	serializedData, err := SerializeInetDiagReqV2(req)
+	if err != nil {
+		t.Fatalf("got an unexpected error %v.", err)
+	}
 	// When: we deserialize
 	result := deserializeInetDiagReqV2(serializedData)
 	// Then: the struct that we get has the same values as the initial struct
@@ -141,7 +151,7 @@ func TestNewInetNetlinkMsg(t *testing.T) {
 	serializedData, err := NewInetNetlinkMsg(h, inetHeader)
 	// Then: there is no error
 	if err != nil {
-		t.Fatalf("unexpected error")
+		t.Fatalf("got an unexpected error %v.", err)
 	}
 	// Then: the message was serialized with the correct data
 	if h.Len != testutils.TestByteOrder.Uint32(serializedData[:4]) {

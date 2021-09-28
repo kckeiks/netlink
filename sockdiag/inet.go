@@ -52,27 +52,30 @@ func NewInetNetlinkMsg(nlHeader unix.NlMsghdr, inetHeader InetDiagReqV2) ([]byte
 		return nil, InetMsgLenError
 	}
 	msg := netlink.NewSerializedNetlinkMessage(nlHeader)
-	ih := SerializeInetDiagReqV2(inetHeader)
+	ih, err := SerializeInetDiagReqV2(inetHeader)
+	if err != nil {
+		return nil, err
+	}
 	copy(msg[unix.NLMSG_HDRLEN :], ih)
 	return msg, nil
 }
 
-func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {
+func SerializeInetDiagReqV2(req InetDiagReqV2) ([]byte, error) {
 	b := bytes.NewBuffer(make([]byte, InetDiagReqV2Len))
 	b.Reset()
 	err := binary.Write(b, netlink.ByteOrder, req)
 	if err != nil {
-		panic("Error: failed to serialize InetDiagReqV2.")
+		return nil, err
 	}
-	return b.Bytes()
+	return b.Bytes(), nil
 }
 
-func DeserializeInetDiagMsg(data []byte) InetDiagMsg {
+func DeserializeInetDiagMsg(data []byte) (*InetDiagMsg, error) {
 	msg := InetDiagMsg{}
 	b := bytes.NewBuffer(data)
 	err := binary.Read(b, netlink.ByteOrder, &msg)
 	if err != nil {
-		panic("Error: Could not parse InetDiagMsg.")
+		return nil, err
 	}
-	return msg 
+	return &msg, nil 
 }
