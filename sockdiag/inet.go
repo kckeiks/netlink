@@ -3,15 +3,18 @@ package sockdiag
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"golang.org/x/sys/unix"
 	"github.com/kckeiks/netlink"
 )
 
 const (
-	INET_DIAG_REQ_V2_LEN        = 56
-	NL_INET_DIAG_REQ_V2_MSG_LEN = 72 // includes netlink header
-	NL_INET_DIAG_MSG_LEN        = 72
+	InetDiagReqV2Len        = 56
+	NlInetDiagReqV2MsgLen   = 72 // includes netlink header
+	NlInetDiagMsgLen        = 72
 )
+
+var InetMsgLenError = errors.New("inet: invalid msg length")
 
 type InetDiagSockID struct {
 	SPort  [2]byte    // source port          __be16  idiag_sport;
@@ -44,18 +47,18 @@ type InetDiagMsg struct {
 	Inode   uint32
 }
 
-func NewInetNetlinkMsg(nlh unix.NlMsghdr, inetHeader InetDiagReqV2) []byte {
-	if nlh.Len != NL_INET_DIAG_REQ_V2_MSG_LEN {
-		panic("Error: Invalid NlMsghdr.Len.")
+func NewInetNetlinkMsg(nlHeader unix.NlMsghdr, inetHeader InetDiagReqV2) ([]byte, error) {
+	if nlHeader.Len != NlInetDiagReqV2MsgLen {
+		return nil, InetMsgLenError
 	}
-	msg := netlink.NewSerializedNetlinkMessage(nlh)
+	msg := netlink.NewSerializedNetlinkMessage(nlHeader)
 	ih := SerializeInetDiagReqV2(inetHeader)
 	copy(msg[unix.NLMSG_HDRLEN :], ih)
-	return msg
+	return msg, nil
 }
 
 func SerializeInetDiagReqV2(req InetDiagReqV2) []byte {
-	b := bytes.NewBuffer(make([]byte, INET_DIAG_REQ_V2_LEN))
+	b := bytes.NewBuffer(make([]byte, InetDiagReqV2Len))
 	b.Reset()
 	err := binary.Write(b, netlink.ByteOrder, req)
 	if err != nil {

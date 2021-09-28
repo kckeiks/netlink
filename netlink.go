@@ -8,9 +8,13 @@ import (
 )
 
 var ByteOrder = binary.LittleEndian
+
 var NlmsgAlignTo uint32 = 4
-var NlMsgDoesNotFit = errors.New("nlmsg does not fit into buffer")
-var NlMsgHeaderError = errors.New("nlmsghdr error")
+
+var (
+	NlMsgDoesNotFit = errors.New("nlmsg does not fit into buffer")
+	NlMsgHeaderError = errors.New("nlmsghdr error")
+)
 
 type NetlinkMessage struct {
 	Header unix.NlMsghdr

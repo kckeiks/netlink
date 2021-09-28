@@ -62,13 +62,13 @@ func main() {
 	}
 
 	h := unix.NlMsghdr{
-		Len: sockdiag.NL_INET_DIAG_REQ_V2_MSG_LEN,
+		Len: sockdiag.NlInetDiagReqV2MsgLen,
 		Type: sockdiag.SOCK_DIAG_BY_FAMILY,
 		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
 		Pid: 0,
 	}
 
-	nlmsg := sockdiag.NewInetNetlinkMsg(h, inetReq)
+	nlmsg, _ := sockdiag.NewInetNetlinkMsg(h, inetReq)
 
 	result, _ := SendInetMessage(nlmsg)
 

@@ -65,10 +65,8 @@ func deserializeInetDiagReqV2(data []byte) InetDiagReqV2 {
 func TestSerializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
 	req := newTestInetDiagReqV2()
-	
 	// When: we serialize the header
 	serializedData := SerializeInetDiagReqV2(req)
-
 	// Then: it's serialized with the correct data
 	if req.Family != serializedData[0] {
 		t.Fatalf("InetDiagReqV2.Family = %d, expected %d", serializedData[0], req.Family)
@@ -111,13 +109,11 @@ func TestSerializeInetDiagReqV2(t *testing.T) {
 func TestDeserializeInetDiagMsg(t *testing.T) {
 	// Given: a serialized InetDiagMsg
 	msg := newTestInetDiagMsg()
-	serializedData := bytes.NewBuffer(make([]byte, NL_INET_DIAG_MSG_LEN))
+	serializedData := bytes.NewBuffer(make([]byte, NlInetDiagMsgLen))
 	serializedData.Reset()
 	binary.Write(serializedData, testutils.TestByteOrder, &msg)
-
 	// When: we deserialize
 	result := DeserializeInetDiagMsg(serializedData.Bytes())
-
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, msg) {
 		t.Fatalf("Given InetDiagMsg %+v but expected %+v,", result, msg)
@@ -128,10 +124,8 @@ func TestDeserializeInetDiagReqV2(t *testing.T) {
 	// Given: a inet_diag_req_v2 header
 	req := newTestInetDiagReqV2()
 	serializedData := SerializeInetDiagReqV2(req)
-
 	// When: we deserialize
 	result := deserializeInetDiagReqV2(serializedData)
-
 	// Then: the struct that we get has the same values as the initial struct
 	if !reflect.DeepEqual(result, req) {
 		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", req, result)
@@ -142,11 +136,13 @@ func TestNewInetNetlinkMsg(t *testing.T) {
 	// Given: a NlMsghdr header and some data in bytes
 	h := testutils.NewTestNlMsghdr()
 	inetHeader := newTestInetDiagReqV2()
-	h.Len = NL_INET_DIAG_REQ_V2_MSG_LEN
-
+	h.Len = NlInetDiagReqV2MsgLen
 	// When: we serialize the header and the data
-	serializedData := NewInetNetlinkMsg(h, inetHeader)
-
+	serializedData, err := NewInetNetlinkMsg(h, inetHeader)
+	// Then: there is no error
+	if err != nil {
+		t.Fatalf("unexpected error")
+	}
 	// Then: the message was serialized with the correct data
 	if h.Len != testutils.TestByteOrder.Uint32(serializedData[:4]) {
 		t.Fatalf("NlMsghdr.Length = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[:4]), h.Len)
@@ -163,13 +159,11 @@ func TestNewInetNetlinkMsg(t *testing.T) {
 	if h.Pid != testutils.TestByteOrder.Uint32(serializedData[12:16]) {
 		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[12:16]), h.Pid)
 	}
-
 	deserializedInetHeader := deserializeInetDiagReqV2(serializedData[16:])
 	// Then: the deserialized inetHeader that we get has the same values as the initial inetHeader
 	if !reflect.DeepEqual(deserializedInetHeader, inetHeader) {
 		t.Fatalf("Given InetDiagReqV2 %+v and deserialized is %+v,", inetHeader, deserializedInetHeader)
 	}
-	
 	// Then: the serialized data has the correct number of bytes
 	if uint32(len(serializedData)) != h.Len {
 		t.Fatalf("Incorrect length len(serializedData)=%d, expected %d", len(serializedData), h.Len)
