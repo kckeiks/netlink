@@ -2,9 +2,57 @@ package main
 
 import (
     "fmt"
+	"github.com/kckeiks/netlink"
 	"github.com/kckeiks/netlink/sockdiag"
     "golang.org/x/sys/unix"
+	"os"
 )
+
+
+func SendInetMessage(nlmsg []byte) ([]sockdiag.InetDiagMsg, error) {
+	fd, err := unix.Socket(unix.AF_NETLINK, unix.SOCK_RAW, unix.NETLINK_SOCK_DIAG)
+	if err != nil {
+		panic("Error creating socket.")
+	}
+	addr := &unix.SockaddrNetlink{Family: unix.AF_NETLINK}
+	unix.Sendto(fd, nlmsg, 0, addr)
+	nlmsgs, err := ReceiveNetlinkMessage(fd)
+	if err != nil {
+		return nil, err
+	}
+	var idmsgs []sockdiag.InetDiagMsg
+	for _, msg := range nlmsgs {
+		idmsgs = append(idmsgs, sockdiag.DeserializeInetDiagMsg(msg.Payload))
+	}
+	return idmsgs, nil
+}
+
+
+func ReceiveNetlinkMessage(fd int) ([]netlink.NetlinkMessage, error) {
+	nlmsgs := make([]netlink.NetlinkMessage, 0)
+	for done := false; !done; {
+		b := make([]byte, os.Getpagesize())
+		r, _, _ := unix.Recvfrom(fd, b, 0)
+		if r == 0 {
+			return nlmsgs, nil
+		}
+		parsedMsgs, err := netlink.ParseNetlinkMessage(b[:r])
+		if err != nil {
+			return nil, err
+		}
+		for _, msg := range parsedMsgs {
+			if msg.Header.Type == unix.NLMSG_DONE {
+				done = true
+				break
+			}
+			if msg.Header.Type == unix.NLMSG_ERROR {
+				return nil, netlink.NlMsgHeaderError
+			}
+			nlmsgs = append(nlmsgs, msg)
+		}
+	}
+	return nlmsgs, nil
+}
 
 func main() {
 	inetReq := sockdiag.InetDiagReqV2{
@@ -22,7 +70,7 @@ func main() {
 
 	nlmsg := sockdiag.NewInetNetlinkMsg(h, inetReq)
 
-	result, _ := sockdiag.SendInetMessage(nlmsg)
+	result, _ := SendInetMessage(nlmsg)
 
 	for _, msg := range result {
 		fmt.Printf("InetDiagMsg: %+v\n", msg)
