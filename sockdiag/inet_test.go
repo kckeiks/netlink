@@ -1,10 +1,11 @@
 package sockdiag
 
 import (
-	"testing"
 	"bytes"
-	"reflect"
 	"encoding/binary"
+	"reflect"
+	"testing"
+
 	"github.com/kckeiks/netlink/internal/testutils"
 )
 

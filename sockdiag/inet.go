@@ -4,23 +4,24 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"golang.org/x/sys/unix"
+
 	"github.com/kckeiks/netlink"
+	"golang.org/x/sys/unix"
 )
 
 const (
-	InetDiagReqV2Len        = 56
-	NlInetDiagReqV2MsgLen   = 72 // includes netlink header
-	NlInetDiagMsgLen        = 72
+	InetDiagReqV2Len      = 56
+	NlInetDiagReqV2MsgLen = 72 // includes netlink header
+	NlInetDiagMsgLen      = 72
 )
 
 var InetMsgLenError = errors.New("inet: invalid msg length")
 
 type InetDiagSockID struct {
-	SPort  [2]byte    // source port          __be16  idiag_sport;
-	DPort  [2]byte    // destination port     __be16  idiag_dport;
-	Src    [16]byte   // source address       __be32  idiag_src[4];
-	Dst    [16]byte   // destination address  __be32  idiag_dst[4];
+	SPort  [2]byte  // source port          __be16  idiag_sport;
+	DPort  [2]byte  // destination port     __be16  idiag_dport;
+	Src    [16]byte // source address       __be32  idiag_src[4];
+	Dst    [16]byte // destination address  __be32  idiag_dst[4];
 	If     uint32
 	Cookie [2]uint32
 }
@@ -39,7 +40,7 @@ type InetDiagMsg struct {
 	State   uint8
 	Timer   uint8
 	Retrans uint8
-	ID InetDiagSockID
+	ID      InetDiagSockID
 	Expires uint32
 	RQueue  uint32
 	WQueue  uint32
@@ -56,7 +57,7 @@ func NewInetNetlinkMsg(nlHeader unix.NlMsghdr, inetHeader InetDiagReqV2) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	copy(msg[unix.NLMSG_HDRLEN :], ih)
+	copy(msg[unix.NLMSG_HDRLEN:], ih)
 	return msg, nil
 }
 
@@ -77,5 +78,5 @@ func DeserializeInetDiagMsg(data []byte) (*InetDiagMsg, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &msg, nil 
+	return &msg, nil
 }

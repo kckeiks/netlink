@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"encoding/binary"
+
 	"golang.org/x/sys/unix"
 )
 
@@ -9,7 +10,7 @@ var TestByteOrder = binary.LittleEndian
 
 func NewTestNlMsghdr() unix.NlMsghdr {
 	h := unix.NlMsghdr{}
-	h.Len = unix.NLMSG_HDRLEN 
+	h.Len = unix.NLMSG_HDRLEN
 	h.Type = 0
 	h.Flags = 5
 	h.Seq = 6
@@ -18,7 +19,7 @@ func NewTestNlMsghdr() unix.NlMsghdr {
 }
 
 func NewTestSerializedNetlinkMsg(h unix.NlMsghdr, data []byte) []byte {
-	if h.Len != (uint32(len(data)) + unix.NLMSG_HDRLEN ) {
+	if h.Len != (uint32(len(data)) + unix.NLMSG_HDRLEN) {
 		panic("Error: Invalid NlMsghdr.Len.")
 	}
 	b := make([]byte, h.Len)

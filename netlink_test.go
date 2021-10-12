@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"reflect"
 	"testing"
-	"golang.org/x/sys/unix"
+
 	"github.com/kckeiks/netlink/internal/testutils"
+	"golang.org/x/sys/unix"
 )
 
 func TestNewSerializedNetlinkMessage(t *testing.T) {
 	// Given: a NlMsghdr header
 	h := testutils.NewTestNlMsghdr()
-	// Given: length of nl msg with 4 more bytes of space 
+	// Given: length of nl msg with 4 more bytes of space
 	h.Len = 16 + 4
 	// When: we serialize the header and the data
 	serializedData := NewSerializedNetlinkMessage(h)
@@ -61,8 +62,8 @@ func TestDeserializeNetlinkMsg(t *testing.T) {
 func TestDeserializeNetlinkMsgWithOutData(t *testing.T) {
 	// Given: a serialized netlink message without extra data
 	h := testutils.NewTestNlMsghdr()
-	data := []byte{} 
-	h.Len = uint32(unix.NLMSG_HDRLEN )
+	data := []byte{}
+	h.Len = uint32(unix.NLMSG_HDRLEN)
 	serializedData := testutils.NewTestSerializedNetlinkMsg(h, data)
 	// When: we deserialize the message
 	nlmsg, err := DeserializeNetlinkMsg(serializedData)
@@ -78,11 +79,11 @@ func TestDeserializeNetlinkMsgWithOutData(t *testing.T) {
 
 func TestDeserializeNetlinkMsgBadLen(t *testing.T) {
 	defer func() {
-        if r := recover(); r == nil {
-            t.Errorf("Error: did not panic.")
-        }
-    }()
-	// Given: a serialized nl message with extra data but 
+		if r := recover(); r == nil {
+			t.Errorf("Error: did not panic.")
+		}
+	}()
+	// Given: a serialized nl message with extra data but
 	// we do not update length in header
 	h := testutils.NewTestNlMsghdr()
 	data := [4]byte{0xFF, 0xFF, 0xFF, 0xFF}
@@ -127,7 +128,7 @@ func TestNlmAlignOf(t *testing.T) {
 	if result != divisor {
 		t.Fatalf("Received %d but expected %d", result, divisor)
 	}
-	// When: we round up the integers 
+	// When: we round up the integers
 	result = nlmAlignOf(notdivisor)
 	// THen: we round up so that it's divisible by 4
 	if result != 24 {

@@ -1,11 +1,12 @@
 package main
 
 import (
-    "fmt"
+	"fmt"
+	"os"
+
 	"github.com/kckeiks/netlink"
 	"github.com/kckeiks/netlink/sockdiag"
-    "golang.org/x/sys/unix"
-	"os"
+	"golang.org/x/sys/unix"
 )
 
 func SendInetMessage(nlmsg []byte) ([]sockdiag.InetDiagMsg, error) {
@@ -55,15 +56,15 @@ func ReceiveNetlinkMessage(fd int) ([]netlink.NetlinkMessage, error) {
 
 func main() {
 	inetReq := sockdiag.InetDiagReqV2{
-		Family: unix.AF_INET,
+		Family:   unix.AF_INET,
 		Protocol: unix.IPPROTO_TCP,
-		States: ^uint32(0),
+		States:   ^uint32(0),
 	}
 	h := unix.NlMsghdr{
-		Len: sockdiag.NlInetDiagReqV2MsgLen,
-		Type: sockdiag.SOCK_DIAG_BY_FAMILY,
+		Len:   sockdiag.NlInetDiagReqV2MsgLen,
+		Type:  sockdiag.SOCK_DIAG_BY_FAMILY,
 		Flags: (unix.NLM_F_REQUEST | unix.NLM_F_DUMP),
-		Pid: 0,
+		Pid:   0,
 	}
 	nlmsg, _ := sockdiag.NewInetNetlinkMsg(h, inetReq)
 	result, _ := SendInetMessage(nlmsg)
