@@ -18,6 +18,6 @@ My motivation for creating this library was that I could not find one that had t
 In the playground directory, you can find different examples on how these packages are used.
 
 ## TODO
-
-- [] support unix domain sockets
+- [x] support IPv4 and IPv6 sockets
+- [ ] support Unix domain sockets
 
