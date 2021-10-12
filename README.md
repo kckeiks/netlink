@@ -17,7 +17,7 @@ My motivation for creating this library was that I could not find one that had t
 
 In the playground directory, you can find different examples on how these packages are used.
 
-## Work In Progress
+## TODO
 
-Most of the heavy lifting has been done and the package `sock_diag` is close to been complete. The most important thing left to do is to implement some proper error handling.
+- [] support unix domain sockets
 
