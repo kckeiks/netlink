@@ -139,7 +139,7 @@ func TestNewUnixNetlinkMsg(t *testing.T) {
 	deserializedUnixHeader := deserializeUnixDiagReq(serializedData[16:])
 	// Then: the deserialized inetHeader that we get has the same values as the initial inetHeader
 	if !reflect.DeepEqual(deserializedUnixHeader, unixHeader) {
-		t.Fatalf("Given InetUnixReq %+v and deserialized is %+v,", unixHeader, deserializedUnixHeader)
+		t.Fatalf("Given UnixDiagReq %+v and deserialized is %+v,", unixHeader, deserializedUnixHeader)
 	}
 	// Then: the serialized data has the correct number of bytes
 	if uint32(len(serializedData)) != h.Len {
