@@ -77,7 +77,7 @@ func TestSerializeUnixDiagReq(t *testing.T) {
 }
 
 func TestDeserializeUnixDiagMsg(t *testing.T) {
-	// Given: a serialized InetDiagMsg
+	// Given: a serialized UnixDiagMsg
 	msg := newTestUnixDiagMsg()
 	serializedData := bytes.NewBuffer(make([]byte, NlUnixDiagMsgLen))
 	serializedData.Reset()
@@ -137,7 +137,7 @@ func TestNewUnixNetlinkMsg(t *testing.T) {
 		t.Fatalf("NlMsghdr.Pid = %d, expected %d", testutils.TestByteOrder.Uint32(serializedData[12:16]), h.Pid)
 	}
 	deserializedUnixHeader := deserializeUnixDiagReq(serializedData[16:])
-	// Then: the deserialized inetHeader that we get has the same values as the initial inetHeader
+	// Then: the deserialized unixHeader that we get has the same values as the initial unixHeader
 	if !reflect.DeepEqual(deserializedUnixHeader, unixHeader) {
 		t.Fatalf("Given UnixDiagReq %+v and deserialized is %+v,", unixHeader, deserializedUnixHeader)
 	}
