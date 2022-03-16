@@ -19,5 +19,5 @@ In the playground directory, you can find different examples on how these packag
 
 ## TODO
 - [x] support IPv4 and IPv6 sockets
-- [ ] support Unix domain sockets
+- [x] support Unix domain sockets
 
