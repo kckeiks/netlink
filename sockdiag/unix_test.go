@@ -22,13 +22,13 @@ func newTestUnixDiagReq() UnixDiagReq {
 }
 
 func newTestUnixDiagMsg() UnixDiagMsg {
-	idm := UnixDiagMsg{}
-	idm.Family = 1
-	idm.Type = 2
-	idm.State = 3
-	idm.Pad = 4
-	idm.Inode = 5
-	return idm
+	udm := UnixDiagMsg{}
+	udm.Family = 1
+	udm.Type = 2
+	udm.State = 3
+	udm.Pad = 4
+	udm.Inode = 5
+	return udm
 }
 
 func deserializeUnixDiagReq(data []byte) UnixDiagReq {
